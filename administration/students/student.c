@@ -47,8 +47,24 @@ void add_student(FILE *student_file)
     printf("Student added successfully with email %s and code %s!\n", s_details.institutional_email, s_details.code);
 }
 
+Student* find_student(FILE *student_file, const char student_code[CODE_LENGTH], const char major_code[CODE_LENGTH]){
+    Student *student = malloc(sizeof(Student));
+    if (student == NULL) {
+        perror("Failed to allocate memory for student\n");
+        return NULL;
+    }
+    fseek(student_file, 0, SEEK_SET);
 
-void find_student(FILE *student_file, const char code[CODE_LENGTH])
+     while (fread(student, sizeof(Student), 1, student_file) == 1){
+        if (strcmp(student->code, student_code) == 0 && strcmp(student->major.major_code, major_code) == 0) {
+            return student;
+        }
+     }
+     free(student);
+     return NULL;
+}
+
+void find_student_and_print_details(FILE *student_file, const char code[CODE_LENGTH])
 {
     Student student;
     int found = 0;

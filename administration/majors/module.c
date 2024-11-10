@@ -1,6 +1,8 @@
 #include "module.h"
 #include "../students/student.h"
 
+
+
 // Major Modules for GI and CE
 
 Module GI_modules[MAX_SEMESTERS][MAX_MODULES_PER_SEMESTER] = {
@@ -344,6 +346,91 @@ Module CoE_modules[MAX_SEMESTERS][MAX_MODULES_PER_SEMESTER] = {
         {"CoE706", "Capstone Project"}
     }
 };
+
+const char* get_grade(float marks) {
+    if (marks >= 16 && marks <= 20) {
+        return "A+";
+    } else if (marks >= 14 && marks < 16) {
+        return "A";
+    } else if (marks >= 12 && marks < 14) {
+        return "B";
+    } else if (marks >= 10 && marks < 12) {
+        return "C";
+    } else {
+        return "F";
+    }
+}
+
+float sum_of_marks(Module *modules, int n){
+    if(n <= 0){
+        return 0.0f;
+    }
+    return sum_of_marks(modules, n - 1) + modules[n - 1].mark;
+}
+
+int deduce_year_of_study(int semester){
+   switch (semester) {
+        case 1:
+        case 2:
+            return 1;
+        case 3:
+        case 4:
+            return 2;
+        case 5:
+        case 6:
+            return 3;
+        default:
+            return 1;  
+    }
+}
+
+void print_student_semester_results(Student *student, int semester){
+        Semester *current_semester = &student->major.semester[semester - 1];
+        int year_of_study = deduce_year_of_study(semester);
+        printf("\n");
+        printf("\t\t\t\t\tSEMESTER %d\n", semester);
+        printf("\t\tFULL NAME: %s %s   MAJOR: %s(%d)   STD CODE: %s\n", student->l_name, student->f_name, student->major.major_code,year_of_study, student->code);
+        printf("--------------------------------------------------------------------------------------------------------\n");
+        printf("%-50s | %-10s | %-10s\n", "MODULE", "CODE", "MARK");
+        printf("--------------------------------------------------------------------------------------------------------\n");
+        // Display marks for the current semester
+        
+        for (int i = 0; i < current_semester->module_count; i++) {
+            printf("%-50s | %-10s | %.2f\n", current_semester->modules[i].module_name, current_semester->modules[i].module_code, current_semester->modules[i].mark);
+        }
+        float semester_average = sum_of_marks(current_semester->modules, current_semester->module_count) / current_semester->module_count;
+        char grade[10];
+        strcpy(grade, get_grade(semester_average));
+        printf("--------------------------------------------------------------------------------------------------------\n");
+        printf("%-50s | %-10s | %.2f(%s)\n", "################################################", "AVERAGE", semester_average,grade);
+
+}
+void allocate_marks_to_student(FILE *student_file, const char student_code[CODE_LENGTH], const char major_code[CODE_LENGTH], int semester) {
+    Student *student;
+    student = find_student(student_file, student_code, major_code);
+    
+    if (student != NULL) {
+        if (semester < 1 || semester > 6) {  
+            printf("Invalid semester number. Please enter a value between 1 and 6.\n");
+            free(student);
+            return;
+        }
+
+        // Updating marks for semester
+        Semester *current_semester = &student->major.semester[semester - 1];  
+        for (int i = 0; i < current_semester->module_count; i++) {
+            printf("Enter Mark for %s (%s): ", current_semester->modules[i].module_name, current_semester->modules[i].module_code);
+            scanf("%f", &current_semester->modules[i].mark);
+        }
+
+        // Display marks added
+        printf("Successfully added marks for student with code %s and major %s\n", student_code, major_code);
+        print_student_semester_results(student, semester);
+        free(student);
+    } else {
+        printf("Student with code %s and major %s not found.\n", student_code, major_code);
+    }
+}
 
 void populate_modules_for_student(Student *student, const char *major_code) {
     int major_index = -1;

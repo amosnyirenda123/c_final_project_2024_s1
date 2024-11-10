@@ -12,6 +12,7 @@
 #define MAX_LENGTH 50
 
 
+
 extern Module GI_modules[MAX_SEMESTERS][MAX_MODULES_PER_SEMESTER];
 extern Module CE_modules[MAX_SEMESTERS][MAX_MODULES_PER_SEMESTER];
 extern Module EE_modules[MAX_SEMESTERS][MAX_MODULES_PER_SEMESTER];
@@ -20,8 +21,11 @@ extern Module ChE_modules[MAX_SEMESTERS][MAX_MODULES_PER_SEMESTER];
 extern Module CoE_modules[MAX_SEMESTERS][MAX_MODULES_PER_SEMESTER];
 
 //populate modules for a given student
+float sum_of_marks(Module *modules, int n);
+int deduce_year_of_study(int semester);
 void populate_modules_for_student(Student *student, const char *major_code);
-
+void print_student_semester_results(Student *student, int semester);
+void allocate_marks_to_student(FILE *student_file, const char student_code[CODE_LENGTH],const char major_code[CODE_LENGTH], int semester);
 //display all modules for a student
 void print_modules_for_student(Student *student);
 

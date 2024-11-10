@@ -27,7 +27,8 @@ typedef struct Student {
 }Student;
 
 void add_student(FILE *student_file);
-void find_student(FILE *student_file, const char code[CODE_LENGTH]);
+void find_student_and_print_details(FILE *student_file, const char code[CODE_LENGTH]);
+Student* find_student(FILE *student_file, const char code[CODE_LENGTH], const char major_code[CODE_LENGTH]);
 void display_all_students(FILE *student_file);
 
 // Student studentList[MAX_STUDENTS];
