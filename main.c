@@ -16,7 +16,9 @@ int main(void)
     // display_all_students(student_file); 
     // add_student(student_file);
     // find_student_and_print_details(student_file, "2024-10011529");
-    allocate_marks_to_student(student_file, "2024-10010847", "GI", 5);
-    fclose(student_file);
+    // update_student_details(student_file, "2024-10022609", "GI");
+    // allocate_marks_to_student(student_file, "2024-10022609", "GI", 1);
+    print_student_transcript(student_file,"2024-10022609","GI", 1);
+    // fclose(student_file);
     return 0;
 }

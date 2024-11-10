@@ -384,26 +384,63 @@ int deduce_year_of_study(int semester){
     }
 }
 
+float get_semester_average(Student *student, int semester){
+    if(semester > 0 && semester < 7){
+        float semester_average = student->major.semester[semester - 1].average_mark;
+        return semester_average;
+    }
+    return 0.0f;
+}
+
+void print_student_yearly_results(Student *student, int start_semester){
+    if(start_semester == 1 || start_semester == 3 || start_semester == 5){
+        printf("********************************************************************************************************\n");
+        printf("\t\t\t\t\tTRANSCRIPT FOR %d YEAR\n", deduce_year_of_study(start_semester));
+        printf("--------------------------------------------------------------------------------------------------------\n");
+        print_student_semester_results(student, start_semester);
+        print_student_semester_results(student, start_semester + 1);
+        float s1_average = get_semester_average(student, start_semester);
+        float s2_average = get_semester_average(student, start_semester + 1);
+        float year_average = (s1_average + s2_average) / 2;
+        printf("\t\t\t\t\tYEAR AVERAGE: %.2f(%s)\n", year_average, get_grade(year_average));
+        printf("********************************************************************************************************\n");
+    }else{
+        printf("Start semester should be one of these values [1,3,5]\n");
+    }
+    
+}
+
 void print_student_semester_results(Student *student, int semester){
-        Semester *current_semester = &student->major.semester[semester - 1];
+        if(semester > 0 && semester <= MAX_SEMESTERS){
+            Semester *current_semester = &student->major.semester[semester - 1];
+            int start_year = current_semester->academic_year.start_year;
+            int end_year = current_semester->academic_year.end_year;
         int year_of_study = deduce_year_of_study(semester);
         printf("\n");
-        printf("\t\t\t\t\tSEMESTER %d\n", semester);
+        printf("\t\t\t\t\t  SEMESTER %d (%d/%d)\n", semester, start_year,end_year);
         printf("\t\tFULL NAME: %s %s   MAJOR: %s(%d)   STD CODE: %s\n", student->l_name, student->f_name, student->major.major_code,year_of_study, student->code);
         printf("--------------------------------------------------------------------------------------------------------\n");
-        printf("%-50s | %-10s | %-10s\n", "MODULE", "CODE", "MARK");
+        printf("%-50s | %-10s | %-10s | %-18s\n", "MODULE", "CODE", "MARK", "STATUS");
         printf("--------------------------------------------------------------------------------------------------------\n");
         // Display marks for the current semester
         
         for (int i = 0; i < current_semester->module_count; i++) {
-            printf("%-50s | %-10s | %.2f\n", current_semester->modules[i].module_name, current_semester->modules[i].module_code, current_semester->modules[i].mark);
+            printf("%-50s | %-10s | %-10.2f | %-18s\n", current_semester->modules[i].module_name, current_semester->modules[i].module_code, current_semester->modules[i].mark, current_semester->modules[i].pass_status);
         }
-        float semester_average = sum_of_marks(current_semester->modules, current_semester->module_count) / current_semester->module_count;
+        current_semester->average_mark = sum_of_marks(current_semester->modules, current_semester->module_count) / current_semester->module_count;;
         char grade[10];
-        strcpy(grade, get_grade(semester_average));
+        strcpy(grade, get_grade(current_semester->average_mark));
         printf("--------------------------------------------------------------------------------------------------------\n");
-        printf("%-50s | %-10s | %.2f(%s)\n", "################################################", "AVERAGE", semester_average,grade);
+        printf("%-50s | %-10s | %.2f(%s)\n", "################################################", "AVERAGE", current_semester->average_mark,grade);
+        printf("--------------------------------------------------------------------------------------------------------\n");
+        }
 
+}
+
+void print_student_transcript(FILE *student_file, const char student_code[CODE_LENGTH], const char major_code[CODE_LENGTH], int start_semester){
+    Student *student;
+    student = find_student(student_file, student_code, major_code);
+    print_student_yearly_results(student, start_semester);
 }
 void allocate_marks_to_student(FILE *student_file, const char student_code[CODE_LENGTH], const char major_code[CODE_LENGTH], int semester) {
     Student *student;
@@ -421,8 +458,24 @@ void allocate_marks_to_student(FILE *student_file, const char student_code[CODE_
         for (int i = 0; i < current_semester->module_count; i++) {
             printf("Enter Mark for %s (%s): ", current_semester->modules[i].module_name, current_semester->modules[i].module_code);
             scanf("%f", &current_semester->modules[i].mark);
+            if(current_semester->modules[i].mark >= current_semester->modules->pass_mark){
+                strcpy(current_semester->modules[i].pass_status, "VALIDATED");
+            }else{
+                strcpy(current_semester->modules[i].pass_status, "NOT VALIDATED");
+            }
+        }
+        fseek(student_file, -(long)sizeof(Student), SEEK_CUR); //Moving back
+        if (ferror(student_file)) {
+            perror("Error seeking to the correct position in the file");
+            free(student);
+            return;
         }
 
+        if (fwrite(student, sizeof(Student), 1, student_file) != 1) {
+            perror("Error writing the updated student record to the file");
+            free(student);
+            return;
+        }
         // Display marks added
         printf("Successfully added marks for student with code %s and major %s\n", student_code, major_code);
         print_student_semester_results(student, semester);
@@ -455,10 +508,12 @@ void populate_modules_for_student(Student *student, const char *major_code) {
                 // Populate GI Modules
                 strcpy(student->major.semester[sem].modules[i].module_code, GI_modules[sem][i].module_code);
                 strcpy(student->major.semester[sem].modules[i].module_name, GI_modules[sem][i].module_name);
+                student->major.semester[sem].modules[i].pass_mark = MODULE_PASS_MARK;
             } else if (major_index == 1) {
                 // Populate CE Modules
                 strcpy(student->major.semester[sem].modules[i].module_code, CE_modules[sem][i].module_code);
                 strcpy(student->major.semester[sem].modules[i].module_name, CE_modules[sem][i].module_name);
+                student->major.semester[sem].modules[i].pass_mark = MODULE_PASS_MARK;
             }
         }
     }
