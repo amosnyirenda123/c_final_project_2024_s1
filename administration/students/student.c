@@ -1,6 +1,7 @@
 #include "student.h"
 #include "../Shared/utils.h"
 #include "../majors/module.h"
+#include "../maps/map.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,26 +21,25 @@ static void generate_student_email(char *email, const char f_name[MAX_LENGTH], c
 void add_student(FILE *student_file)
 {
     Student s_details;
-    int start_year, end_year;
+    Node* student_lookup_table[TABLE_SIZE] = {0};
+    char student_lookup_path[100], student_full_name[100];
+    const char* dir = "data";
+
+    snprintf(student_lookup_path, sizeof(student_lookup_path), "%s/student_lookup.dat", dir);
+
     printf("Enter student Last Name: ");
-    scanf("%s", s_details.l_name);
+    scanf(" %[^\n]", s_details.l_name);
     printf("Enter student First Name: ");
-    scanf("%s", s_details.f_name);
+    scanf(" %[^\n]", s_details.f_name);
     printf("Enter student sex (M/F): ");
     scanf(" %c", &s_details.gender);
     printf("Enter Student Date of Birth (YYYY/MM/DD): ");
     scanf("%d %d %d", &s_details.s_date_of_birth.year, &s_details.s_date_of_birth.month, &s_details.s_date_of_birth.day);
-    printf("Enter student Academic Year (start[SPACE]end): ");
-    scanf("%d %d", &start_year, &end_year);
-    s_details.major.semester[0].academic_year.start_year = start_year; 
-    s_details.major.semester[1].academic_year.start_year = start_year; 
-    s_details.major.semester[0].academic_year.end_year = end_year;
-    s_details.major.semester[1].academic_year.end_year = end_year;
-    printf("Enter the code of the major (GI/CE/ME/ChE/CoE/2AP1/2AP2): ");
+    printf("Enter the code of the major (CS/CE/ME/EE): ");
     scanf("%s", s_details.major.major_code);
 
     // Assign Modules based on Major
-    populate_modules_for_student(&s_details, s_details.major.major_code);
+    populate_modules_for_student(&s_details, s_details.major.major_code, 1);
 
 
     char first_name_cpy[MAX_LENGTH], last_name_cpy[MAX_LENGTH];
@@ -49,6 +49,12 @@ void add_student(FILE *student_file)
     string_to_lowercase(last_name_cpy);
     generate_student_email(s_details.institutional_email, first_name_cpy, last_name_cpy);
     sprintf(s_details.code, "%d-%ld", get_current_year(), generate_unique_code());
+
+    // Load and insert into lookup table
+    loadFromFile(student_lookup_table, student_lookup_path);
+    sprintf(student_full_name,"%s %s", s_details.l_name, s_details.f_name);
+    insert(student_lookup_table, s_details.code, student_full_name);
+    saveToFile(student_lookup_table, student_lookup_path);
 
     fseek(student_file, 0, SEEK_END); 
     fwrite(&s_details, sizeof(Student), 1, student_file);
@@ -140,10 +146,13 @@ void update_student_details(FILE *student_file, const char student_code[CODE_LEN
         printf("Would you like to modify the student's major? This operation deletes all the existing data about the major. It is advised that you delete specific entries and not the entire major. (y/n): ");
         scanf("%s", response);
         if(tolower(response[0]) == 'y'){
-            printf("Enter the code of the major (GI/CE/ME/ChE/CoE/2AP1/2AP2): ");
+            int semester;
+            printf("Enter the code of the major (CS,CE,EE,ME)");
             scanf("%s", student->major.major_code);  
+            printf("Enter student semester number(1-6)");
+            scanf("%d", &semester);
             // Assign Modules based on Major
-            populate_modules_for_student(student, student->major.major_code);
+            populate_modules_for_student(student, student->major.major_code, semester);
             char first_name_cpy[MAX_LENGTH], last_name_cpy[MAX_LENGTH];
             strcpy(first_name_cpy, student->f_name);
             strcpy(last_name_cpy, student->l_name);
@@ -175,7 +184,7 @@ void find_student_and_print_details(FILE *student_file, const char code[CODE_LEN
 
             printf("%-15s | %-15s | %-15s | %-20s | %-30s\n",
                student.l_name, student.f_name, student.major,student.code, student.institutional_email);
-            print_modules_for_student(&student);
+            
 
             found = 1;
             break;

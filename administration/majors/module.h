@@ -3,7 +3,9 @@
 
 #include <stdio.h>
 #include <string.h>
+// #include <hpdf.h>
 #include "../students/student.h"
+#include "../majors/major.h"
 
 #define MAX_MODULES_PER_SEMESTER 6
 #define MAX_SEMESTERS 6
@@ -26,11 +28,16 @@ float sum_of_marks(Module *modules, int n);
 float get_semester_average(Student *student, int semester);
 int deduce_year_of_study(int semester);
 void print_student_yearly_results(Student *student, int start_semester);
-void populate_modules_for_student(Student *student, const char *major_code);
+void populate_modules_for_student(Student *student, const char *major_code, int semester);
 void print_student_semester_results(Student *student, int semester);
+void assign_semester_modules(FILE* student_file, char *student_code, const char *major_code, int semester);
 void allocate_marks_to_student(FILE *student_file, const char student_code[CODE_LENGTH],const char major_code[CODE_LENGTH], int semester);
 //display all modules for a student
-void print_modules_for_student(Student *student);
+void print_modules_for_semester(const char student_code[CODE_LENGTH],const char major_code[CODE_LENGTH], int semester);
+void print_modules(const char *filename);
 void print_student_transcript(FILE *student_file, const char student_code[CODE_LENGTH], const char major_code[CODE_LENGTH], int start_semester);
+void add_module(FILE* file, Node* lookup_table_module[], Node* lookup_table_prf[], Node* lookup_table_dpt[], Node* lookup_table_major[]);
+
+// void print_student_semester_results_pdf(HPDF_Doc pdf, HPDF_Page page, Student *student, int semester);
 
 #endif

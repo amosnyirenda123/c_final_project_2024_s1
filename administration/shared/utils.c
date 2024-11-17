@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <direct.h>
 
 int get_current_year() {
     time_t t = time(NULL);  
@@ -31,4 +32,17 @@ void string_to_uppercase(char *str) {
         str++; 
     }
 }
+
+// char* create_directory(char name_dir[]){
+//    #ifdef _WIN32
+//         if (_mkdir(name_dir) != 0) {
+//             printf("Failed to create directory: %s\n", name_dir);
+//         }
+//     #else
+        
+//         if (mkdir(dir, 0777) != 0) { 
+//             printf("Failed to create directory: %s\n", dir);
+//         }
+//     #endif 
+// }
 

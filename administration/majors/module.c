@@ -1,5 +1,8 @@
 #include "module.h"
+#include "../maps/map.h"
 #include "../students/student.h"
+#include <ctype.h>
+// #include <hpdf.h>
 
 
 
@@ -393,19 +396,38 @@ float get_semester_average(Student *student, int semester){
 }
 
 void print_student_yearly_results(Student *student, int start_semester){
+    // HPDF_Doc pdf = HPDF_New(NULL, NULL);
+
+    // if (!pdf) {
+        // printf("Failed to create PDF document\n");
+    // }
+
+    // Set up the page
+    // HPDF_Page page = HPDF_AddPage(pdf);
+    // HPDF_Page_SetSize(page, HPDF_PAGE_SIZE_A4, HPDF_PAGE_PORTRAIT);
+    // HPDF_Font font = HPDF_GetFont(pdf, "Helvetica", NULL);
+    // HPDF_Page_SetFontAndSize(page, font, 12);
+
     if(start_semester == 1 || start_semester == 3 || start_semester == 5){
         printf("********************************************************************************************************\n");
-        printf("\t\t\t\t\tTRANSCRIPT FOR %d YEAR\n", deduce_year_of_study(start_semester));
+        printf("\t\t\t\t%d YEAR STATEMENT OF RESULTS (TRANSCRIPT)\n", deduce_year_of_study(start_semester));
         printf("--------------------------------------------------------------------------------------------------------\n");
         print_student_semester_results(student, start_semester);
         print_student_semester_results(student, start_semester + 1);
+        // print_student_semester_results_pdf(pdf, page, student, start_semester);
+        // print_student_semester_results_pdf(pdf, page, student, start_semester + 1);
+        
         float s1_average = get_semester_average(student, start_semester);
         float s2_average = get_semester_average(student, start_semester + 1);
         float year_average = (s1_average + s2_average) / 2;
         printf("\t\t\t\t\tYEAR AVERAGE: %.2f(%s)\n", year_average, get_grade(year_average));
         printf("********************************************************************************************************\n");
+        // HPDF_SaveToFile(pdf, "transcript.pdf");
+        // HPDF_Free(pdf);
+        printf("PDF created successfully!\n");
     }else{
         printf("Start semester should be one of these values [1,3,5]\n");
+        // HPDF_Free(pdf);
     }
     
 }
@@ -437,6 +459,164 @@ void print_student_semester_results(Student *student, int semester){
 
 }
 
+// void print_student_semester_results_pdf(HPDF_Doc pdf, HPDF_Page page, Student *student, int semester) {
+//     if (semester > 0 && semester <= MAX_SEMESTERS) {
+//         Semester *current_semester = &student->major.semester[semester - 1];
+        
+//         char buffer[256];
+        
+//         // Semester title
+//         sprintf(buffer, "SEMESTER %d (%d/%d)", semester, current_semester->academic_year.start_year, current_semester->academic_year.end_year);
+//         HPDF_Page_BeginText(page);
+//         HPDF_Page_TextOut(page, 50, 750, buffer);
+//         HPDF_Page_EndText(page);
+
+//         // Header
+//         HPDF_Page_BeginText(page);
+//         sprintf(buffer, "FULL NAME: %s %s | MAJOR: %s | STD CODE: %s", student->l_name, student->f_name, student->major.major_code, student->code);
+//         HPDF_Page_TextOut(page, 50, 730, buffer);
+//         HPDF_Page_EndText(page);
+
+//         // Table header
+//         HPDF_Page_BeginText(page);
+//         HPDF_Page_TextOut(page, 50, 700, "MODULE                               | CODE       | MARK     | STATUS");
+//         HPDF_Page_EndText(page);
+        
+//         // Module data
+//         for (int i = 0; i < current_semester->module_count; i++) {
+//             Module *mod = &current_semester->modules[i];
+//             sprintf(buffer, "%-50s | %-10s | %-10.2f | %-18s", mod->module_name, mod->module_code, mod->mark, mod->pass_status);
+//             HPDF_Page_BeginText(page);
+//             HPDF_Page_TextOut(page, 50, 680 - i * 15, buffer);
+//             HPDF_Page_EndText(page);
+//         }
+
+//         // Semester average
+//         current_semester->average_mark = sum_of_marks(current_semester->modules, current_semester->module_count) / current_semester->module_count;
+//         char grade[10];
+//         strcpy(grade, get_grade(current_semester->average_mark));
+//         sprintf(buffer, "AVERAGE: %.2f (%s)", current_semester->average_mark, grade);
+//         HPDF_Page_BeginText(page);
+//         HPDF_Page_TextOut(page, 50, 500, buffer);
+//         HPDF_Page_EndText(page);
+//     }
+// }
+
+// void add_module(){
+//     Module module_details;
+//     int sem;
+//     char pf_code[MAX_LENGTH], dpt_code[MAX_LENGTH], mjr_code[MAX_LENGTH];
+//     printf("Enter module name: ");
+//     scanf("%s", module_details.module_name);
+//     printf("Enter module code: ");
+//     scanf("%s", module_details.module_code);
+//     printf("Enter pass mark ");
+//     scanf("%f", &module_details.pass_mark);
+//     printf("Enter semester: ");
+//     scanf("%d", &sem);
+//     if(sem > 0 && sem < MAX_SEMESTERS + 1){
+//         module_details.semester = sem - 1;
+//     }
+//     printf("Enter Department code: ");
+//     scanf("%s", dpt_code);
+
+//     printf("Enter Professor code: ");
+//     scanf("%s", pf_code);
+
+//     printf("Enter Major code: ");
+//     scanf("%s", mjr_code);
+
+// }
+
+void add_module(FILE* file, Node* lookup_table_module[], Node* lookup_table_prf[], Node* lookup_table_dpt[], Node* lookup_table_major[]) {
+    Module module;
+    int sem_temp;
+    char opt;
+    const char* dir = "data";
+    char code[MAX_CODE_LENGTH];
+    FILE* majors;
+
+    char module_lookup_path[100], pfr_lookup_path[100], dpt_lookup_path[100], major_lookup_path[100], char_majors_path[100];
+
+    // Generating paths 
+    snprintf(module_lookup_path, sizeof(module_lookup_path), "%s/module_lookup.dat", dir);
+    snprintf(pfr_lookup_path, sizeof(pfr_lookup_path), "%s/pfr_lookup.dat", dir);
+    snprintf(dpt_lookup_path, sizeof(dpt_lookup_path), "%s/dpt_lookup.dat", dir);
+    snprintf(major_lookup_path, sizeof(major_lookup_path), "%s/major_lookup.dat", dir);
+    
+   
+    snprintf(char_majors_path, sizeof(char_majors_path), "%s/majors.dat", dir);
+
+    majors = fopen(char_majors_path, "ab+");
+
+    printf("Enter module code: ");
+    scanf("%s", module.module_code);
+
+    printf("Enter module name: ");
+    scanf(" %[^\n]", module.module_name); 
+
+    printf("Enter professor code: ");
+    scanf("%s", module.prof_code);
+
+    printf("Enter professor name: ");
+    scanf(" %[^\n]", module.prof_name);
+
+    printf("Enter department code: ");
+    scanf("%s", module.dept_code);
+
+    printf("Enter department name: ");
+    scanf(" %[^\n]", module.dept_name);
+
+    printf("Enter major code: ");
+    scanf("%s", code);
+
+    loadFromFile(lookup_table_major, major_lookup_path);
+    if (search(lookup_table_major, code) == NULL) {
+        printf("Major does not exist. Would you like to enter a new entry in Major? (y/n): ");
+        scanf(" %c", &opt);
+        if (tolower(opt) == 'y') {
+            char* m_code = add_major(majors, lookup_table_major);
+            strcpy(module.major_code, m_code);
+            free(m_code);
+        } else {
+            printf("Major code not added. Aborting operation.\n");
+            return;
+        }
+    } else {
+        strcpy(module.major_code, code);
+    }
+
+    printf("Enter semester (1-6): ");
+    scanf("%d", &sem_temp);
+    module.semester = (sem_temp > 0 && sem_temp <= MAX_SEMESTERS) ? sem_temp : 1;
+
+    printf("Enter pass mark: ");
+    scanf("%f", &module.pass_mark);
+
+    // Load and insert into lookup tables
+    loadFromFile(lookup_table_module, module_lookup_path);
+    loadFromFile(lookup_table_dpt, dpt_lookup_path);
+    loadFromFile(lookup_table_prf, pfr_lookup_path);
+
+    insert(lookup_table_module, module.module_code, module.module_name);
+    insert(lookup_table_prf, module.prof_code, module.prof_name);
+    insert(lookup_table_dpt, module.dept_code, module.dept_name);
+
+    saveToFile(lookup_table_module, module_lookup_path);
+    saveToFile(lookup_table_dpt, dpt_lookup_path);
+    saveToFile(lookup_table_prf, pfr_lookup_path);
+
+    
+    fseek(file, 0, SEEK_END);
+    fwrite(&module, sizeof(Module), 1, file);
+
+    
+    fclose(file);
+}
+
+
+
+
 void print_student_transcript(FILE *student_file, const char student_code[CODE_LENGTH], const char major_code[CODE_LENGTH], int start_semester){
     Student *student;
     student = find_student(student_file, student_code, major_code);
@@ -458,13 +638,13 @@ void allocate_marks_to_student(FILE *student_file, const char student_code[CODE_
         for (int i = 0; i < current_semester->module_count; i++) {
             printf("Enter Mark for %s (%s): ", current_semester->modules[i].module_name, current_semester->modules[i].module_code);
             scanf("%f", &current_semester->modules[i].mark);
-            if(current_semester->modules[i].mark >= current_semester->modules->pass_mark){
+            if(current_semester->modules[i].mark >= current_semester->modules[i].pass_mark){
                 strcpy(current_semester->modules[i].pass_status, "VALIDATED");
             }else{
                 strcpy(current_semester->modules[i].pass_status, "NOT VALIDATED");
             }
         }
-        fseek(student_file, -(long)sizeof(Student), SEEK_CUR); //Moving back
+        fseek(student_file, -(long)sizeof(Student), SEEK_CUR); //Moving back 
         if (ferror(student_file)) {
             perror("Error seeking to the correct position in the file");
             free(student);
@@ -485,46 +665,180 @@ void allocate_marks_to_student(FILE *student_file, const char student_code[CODE_
     }
 }
 
-void populate_modules_for_student(Student *student, const char *major_code) {
-    int major_index = -1;
-    
-    
-    if (strcmp(major_code, "GI") == 0) {
-        major_index = 0; 
-    } else if (strcmp(major_code, "CE") == 0) {
-        major_index = 1; 
-    }
-
-   
-    if (major_index == -1) {
-        printf("Error: Invalid major code.\n");
+void assign_semester_modules(FILE* student_file, char *student_code, const char *major_code, int semester) {
+    Student *student = find_student(student_file, student_code, major_code);
+    if (student == NULL) {
+        printf("Student does not exist.\n");
         return;
     }
 
-    for (int sem = 0; sem < MAX_SEMESTERS; sem++) {
-        student->major.semester[sem].module_count = MAX_MODULES_PER_SEMESTER;
-        for (int i = 0; i < MAX_MODULES_PER_SEMESTER; i++) {
-            if (major_index == 0) {
-                // Populate GI Modules
-                strcpy(student->major.semester[sem].modules[i].module_code, GI_modules[sem][i].module_code);
-                strcpy(student->major.semester[sem].modules[i].module_name, GI_modules[sem][i].module_name);
-                student->major.semester[sem].modules[i].pass_mark = MODULE_PASS_MARK;
-            } else if (major_index == 1) {
-                // Populate CE Modules
-                strcpy(student->major.semester[sem].modules[i].module_code, CE_modules[sem][i].module_code);
-                strcpy(student->major.semester[sem].modules[i].module_name, CE_modules[sem][i].module_name);
-                student->major.semester[sem].modules[i].pass_mark = MODULE_PASS_MARK;
-            }
+    
+    if (student->major.semester[semester - 1].module_count > 0) {
+        printf("Modules already assigned for semester %d.\n", semester);
+        return;
+    }
+
+    
+    populate_modules_for_student(student, major_code, semester);
+
+
+    fseek(student_file, -(long)sizeof(Student), SEEK_CUR); 
+    if (fwrite(student, sizeof(Student), 1, student_file) != 1) {
+        printf("Error writing student data to file.\n");
+        return;
+    }
+
+    fclose(student_file);
+    printf("Modules assigned and student record updated.\n");
+}
+
+void populate_modules_for_student(Student *student, const char *major_code, int semester) {
+    Module *module = (Module*)malloc(sizeof(Module));
+    Node* lookup_table_major[TABLE_SIZE] = {NULL};  // Initialize hash table
+    char major_lookup_path[100], modules_path[100];
+    FILE *modules;
+    const char* dir = "data";
+    int start_year, end_year;
+    snprintf(major_lookup_path, sizeof(major_lookup_path), "%s/major_lookup.dat", dir);
+    snprintf(modules_path, sizeof(modules_path), "%s/modules.dat", dir);
+
+    printf("Enter student Academic Year (start[SPACE]end): ");
+    scanf("%d %d", &start_year, &end_year);
+
+    loadFromFile(lookup_table_major, major_lookup_path);
+    if (search(lookup_table_major, major_code) == NULL) {
+        printf("Could not find major '%s'.\n", major_code);
+        free(module);
+        return;
+    }
+
+    
+    modules = fopen(modules_path, "rb");
+    if (modules == NULL) {
+        printf("Could not open file '%s' for reading.\n", modules_path);
+        free(module);
+        return;
+    }
+
+    int module_count = 0; 
+    while (module_count < MAX_MODULES_PER_SEMESTER && fread(module, sizeof(Module), 1, modules) == 1) {
+        if (strcmp(module->major_code, major_code) == 0 && module->semester == semester) {
+            // Populate the student's modules
+            strcpy(student->major.semester[semester - 1].modules[module_count].module_code, module->module_code);
+            strcpy(student->major.semester[semester - 1].modules[module_count].module_name, module->module_name);
+            strcpy(student->major.semester[semester - 1].modules[module_count].dept_code, module->dept_code);
+            strcpy(student->major.semester[semester - 1].modules[module_count].dept_name, module->dept_name);
+            strcpy(student->major.semester[semester - 1].modules[module_count].prof_code, module->prof_code);
+            strcpy(student->major.semester[semester - 1].modules[module_count].prof_name, module->prof_name);
+            strcpy(student->major.semester[semester - 1].modules[module_count].major_code, major_code);
+            student->major.semester[semester - 1].modules[module_count].pass_mark = module->pass_mark;
+            student->major.semester[semester - 1].modules[module_count].semester = module->semester;
+            student->major.semester[semester - 1].academic_year.start_year = start_year;
+            student->major.semester[semester - 1].academic_year.end_year = end_year;
+
+            module_count++;  
         }
+    }
+    student->major.semester[semester -1].module_count = module_count;
+    fclose(modules);  
+    free(module);     
+
+    if (module_count == 0) {
+        printf("No modules found for major '%s' in semester %d.\n", major_code, semester);
+    } else {
+        printf("Populated %d module(s) for major '%s' in semester %d.\n", module_count, major_code, semester);
     }
 }
 
-void print_modules_for_student(Student *student) {
+
+// NEED Modifications
+void print_modules_for_semester(const char student_code[CODE_LENGTH],const char major_code[CODE_LENGTH], int semester) {
+    char student_file_path[100];
+    const char* dir = "data";
+
+    snprintf(student_file_path, sizeof(student_file_path), "%s/student.dat", dir);
+    FILE *student_ptr;
+    student_ptr = fopen(student_file_path, "rb");
+    if(student_ptr == NULL){
+        printf("Could not open file for reading.");
+        return;
+    }
+    Student* student = find_student(student_ptr,student_code, major_code);
+    if (student == NULL) {
+        printf("Error: Student structure is NULL.\n");
+        return;
+    }
+
+    if (semester < 1 || semester > MAX_SEMESTERS) {
+        printf("Error: Invalid semester number. Valid range is 1 to %d.\n", MAX_SEMESTERS);
+        return;
+    }
+
     printf("Modules for Major: %s\n", student->major.major_code);
-    for (int sem = 0; sem < MAX_SEMESTERS; sem++) {
-        printf("\nSemester %d:\n", sem + 1);
-        for (int i = 0; i < student->major.semester[sem].module_count; i++) {
-            printf("%s - %s\n", student->major.semester[sem].modules[i].module_code, student->major.semester[sem].modules[i].module_name);
+    printf("============================================================\n");
+    printf("\nSemester %d:\n", semester);
+    printf("-----------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+    printf("%-10s | %-80s | %-10s | %-60s | %-20s | %-20s | %-10s\n", 
+           "Code", "Name", "Dept Code", "Dept Name", "Professor Code", "Professor Name", "Pass Mark");
+    printf("-----------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+
+    int has_modules = 0;  // Flag to check if the semester has valid modules
+    for (int i = 0; i < MAX_MODULES_PER_SEMESTER; i++) {
+        if (strlen(student->major.semester[semester - 1].modules[i].module_code) == 0) {
+            continue;  // Skip empty entries
         }
+
+        has_modules = 1;
+        printf("%-10s | %-80s | %-10s | %-30s | %-20s | %-20s | %-10.2f\n", 
+               student->major.semester[semester - 1].modules[i].module_code, 
+               student->major.semester[semester - 1].modules[i].module_name,
+               student->major.semester[semester - 1].modules[i].dept_code, 
+               student->major.semester[semester - 1].modules[i].dept_name, 
+               student->major.semester[semester - 1].modules[i].prof_code, 
+               student->major.semester[semester - 1].modules[i].prof_name, 
+               student->major.semester[semester - 1].modules[i].pass_mark);
+    }
+
+    if (!has_modules) {
+        printf("No modules found for Semester %d.\n", semester);
+    }
+}
+
+
+
+
+
+
+void print_modules(const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) {
+        printf("Could not open file '%s'.\n", filename);
+        return;
+    }
+
+    Module module;
+    int module_count = 0;
+
+    printf("Contents of '%s':\n", filename);
+    while (fread(&module, sizeof(Module), 1, file) == 1) {
+        printf("Module %d:\n", ++module_count);
+        printf("  Module Code   : %s\n", module.module_code);
+        printf("  Module Name   : %s\n", module.module_name);
+        printf("  Department Code: %s\n", module.dept_code);
+        printf("  Department Name: %s\n", module.dept_name);
+        printf("  Professor Code : %s\n", module.prof_code);
+        printf("  Professor Name : %s\n", module.prof_name);
+        printf("  Major Code     : %s\n", module.major_code);
+        printf("  Semester       : %d\n", module.semester);
+        printf("  Pass Mark      : %.2f\n", module.pass_mark);
+        printf("\n");
+    }
+
+    fclose(file);
+
+    if (module_count == 0) {
+        printf("No modules found in file '%s'.\n", filename);
+    } else {
+        printf("Total modules: %d\n", module_count);
     }
 }
