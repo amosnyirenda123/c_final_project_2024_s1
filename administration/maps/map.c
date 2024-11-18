@@ -60,12 +60,23 @@ void delete(Node* hashTable[], const char* key) {
     free(current);
 }
 
-void update(Node* hashTable[], const char* key){
-    char value[MAX_STRLEN];
-    delete(hashTable, key);
-    printf("Enter new value: ");
-    scanf("%s", value);
-    insert(hashTable, key, value);
+void update_hash(Node* hashTable[], const char* key, const char* new_value){
+    int index = hash(key);  
+    Node* current = hashTable[index];
+
+
+    while (current != NULL) {
+        if (strcmp(current->key, key) == 0) {  
+            strcpy(current->value, new_value); 
+            printf("Updated key '%s' with new value '%s'.\n", key, new_value);
+            return;
+        }
+        current = current->nxt;
+    }
+
+    printf("Key '%s' not found. Inserting new entry.\n", key);
+    // Fallback
+    insert(hashTable, key, new_value);
 }
 
 

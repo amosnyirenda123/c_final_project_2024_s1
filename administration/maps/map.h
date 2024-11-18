@@ -25,6 +25,7 @@ void insert(Node* hashTable[], const char* key, const char* value);
 char* search(Node* hashTable[], const char* key);
 void delete(Node* hashTable[], const char* key);
 void display(Node* hashTable[]);
+void update_hash(Node* hashTable[], const char* key, const char* new_value);
 void saveToFile(Node* hashTable[], const char* filename);
 void loadFromFile(Node* hashTable[], const char* filename);
 

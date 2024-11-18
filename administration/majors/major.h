@@ -41,7 +41,8 @@ typedef struct Major {
 } Major;
 
 
-char* add_major(FILE* file, Node* lookup_table_major[]);
+char* add_major(FILE* file);
+void print_majors(FILE* file);
 
 
 

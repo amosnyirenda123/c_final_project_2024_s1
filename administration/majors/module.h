@@ -33,10 +33,11 @@ void print_student_semester_results(Student *student, int semester);
 void assign_semester_modules(FILE* student_file, char *student_code, const char *major_code, int semester);
 void allocate_marks_to_student(FILE *student_file, const char student_code[CODE_LENGTH],const char major_code[CODE_LENGTH], int semester);
 //display all modules for a student
-void print_modules_for_semester(const char student_code[CODE_LENGTH],const char major_code[CODE_LENGTH], int semester);
-void print_modules(const char *filename);
+void print_modules_for_semester(Student* student, int semester);
+void print_modules(FILE* file);
 void print_student_transcript(FILE *student_file, const char student_code[CODE_LENGTH], const char major_code[CODE_LENGTH], int start_semester);
-void add_module(FILE* file, Node* lookup_table_module[], Node* lookup_table_prf[], Node* lookup_table_dpt[], Node* lookup_table_major[]);
+void add_module(FILE* file);
+void update_module(FILE* file, const char* module_code);
 
 // void print_student_semester_results_pdf(HPDF_Doc pdf, HPDF_Page page, Student *student, int semester);
 

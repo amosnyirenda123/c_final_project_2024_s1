@@ -528,8 +528,12 @@ void print_student_semester_results(Student *student, int semester){
 
 // }
 
-void add_module(FILE* file, Node* lookup_table_module[], Node* lookup_table_prf[], Node* lookup_table_dpt[], Node* lookup_table_major[]) {
+void add_module(FILE* file) {
     Module module;
+    Node* lookup_table_module[TABLE_SIZE] = {0};
+    Node* lookup_table_prf[TABLE_SIZE] = {0};
+    Node* lookup_table_dpt[TABLE_SIZE] = {0};
+    Node* lookup_table_major[TABLE_SIZE] = {0};
     int sem_temp;
     char opt;
     const char* dir = "data";
@@ -575,7 +579,7 @@ void add_module(FILE* file, Node* lookup_table_module[], Node* lookup_table_prf[
         printf("Major does not exist. Would you like to enter a new entry in Major? (y/n): ");
         scanf(" %c", &opt);
         if (tolower(opt) == 'y') {
-            char* m_code = add_major(majors, lookup_table_major);
+            char* m_code = add_major(majors);
             strcpy(module.major_code, m_code);
             free(m_code);
         } else {
@@ -751,56 +755,48 @@ void populate_modules_for_student(Student *student, const char *major_code, int 
 }
 
 
-// NEED Modifications
-void print_modules_for_semester(const char student_code[CODE_LENGTH],const char major_code[CODE_LENGTH], int semester) {
-    char student_file_path[100];
+
+void print_modules_for_semester(Student* student, int semester) {
+
+    Node* lookup_table_major[TABLE_SIZE] = {NULL}; 
+    char major_lookup_path[100];
     const char* dir = "data";
+    snprintf(major_lookup_path, sizeof(major_lookup_path), "%s/major_lookup.dat", dir);
+    loadFromFile(lookup_table_major, major_lookup_path);
 
-    snprintf(student_file_path, sizeof(student_file_path), "%s/student.dat", dir);
-    FILE *student_ptr;
-    student_ptr = fopen(student_file_path, "rb");
-    if(student_ptr == NULL){
-        printf("Could not open file for reading.");
-        return;
-    }
-    Student* student = find_student(student_ptr,student_code, major_code);
-    if (student == NULL) {
-        printf("Error: Student structure is NULL.\n");
-        return;
-    }
-
+    char* major_name = search(lookup_table_major, student->major.major_code);
+    
     if (semester < 1 || semester > MAX_SEMESTERS) {
-        printf("Error: Invalid semester number. Valid range is 1 to %d.\n", MAX_SEMESTERS);
+        printf("\033[1;31m[ERROR]Error: Invalid semester number. Valid range is 1 to %d.\033[0m\n", MAX_SEMESTERS);
         return;
     }
 
-    printf("Modules for Major: %s\n", student->major.major_code);
-    printf("============================================================\n");
-    printf("\nSemester %d:\n", semester);
-    printf("-----------------------------------------------------------------------------------------------------------------------------------------------------------\n");
-    printf("%-10s | %-80s | %-10s | %-60s | %-20s | %-20s | %-10s\n", 
-           "Code", "Name", "Dept Code", "Dept Name", "Professor Code", "Professor Name", "Pass Mark");
-    printf("-----------------------------------------------------------------------------------------------------------------------------------------------------------\n");
-
-    int has_modules = 0;  // Flag to check if the semester has valid modules
-    for (int i = 0; i < MAX_MODULES_PER_SEMESTER; i++) {
-        if (strlen(student->major.semester[semester - 1].modules[i].module_code) == 0) {
-            continue;  // Skip empty entries
+    if(student->major.semester[semester - 1].module_count == 0){
+        printf("\033[1;31m[NOTFOUND] No modules found for semester %d \033[0m\n", semester);
+    } else {
+        if(major_name != NULL){
+            printf("\nStudent Major: %s(%s)\n", major_name, student->major.major_code);
+        }else{
+            printf("\nStudent Major: %s\n", student->major.major_code);
         }
+        
+        printf("Semester %d:\n", semester);
+        printf("\033[1;34m\033[1m**************************************************************************************************************************************************\n\033[0m");
 
-        has_modules = 1;
-        printf("%-10s | %-80s | %-10s | %-30s | %-20s | %-20s | %-10.2f\n", 
-               student->major.semester[semester - 1].modules[i].module_code, 
-               student->major.semester[semester - 1].modules[i].module_name,
-               student->major.semester[semester - 1].modules[i].dept_code, 
-               student->major.semester[semester - 1].modules[i].dept_name, 
-               student->major.semester[semester - 1].modules[i].prof_code, 
-               student->major.semester[semester - 1].modules[i].prof_name, 
-               student->major.semester[semester - 1].modules[i].pass_mark);
-    }
+       
+        printf("\033[1;34m\033[1m%-12s | %-40s | %-40s | %-30s | %-12s\n\033[0m", 
+            "Code", "Module Name", "Department Name", "Professor Name", "Pass Status");
+        printf("\033[1;34m\033[1m**************************************************************************************************************************************************\n\033[0m");
 
-    if (!has_modules) {
-        printf("No modules found for Semester %d.\n", semester);
+        
+        for (int i = 0; i < student->major.semester[semester - 1].module_count; i++) {
+            printf("%-12s | %-40s | %-40s | %-30s | %-12s\n", 
+                student->major.semester[semester - 1].modules[i].module_code, 
+                student->major.semester[semester - 1].modules[i].module_name,
+                student->major.semester[semester - 1].modules[i].dept_name, 
+                student->major.semester[semester - 1].modules[i].prof_name,
+                student->major.semester[semester - 1].modules[i].pass_status);
+        }
     }
 }
 
@@ -809,36 +805,149 @@ void print_modules_for_semester(const char student_code[CODE_LENGTH],const char 
 
 
 
-void print_modules(const char *filename) {
-    FILE *file = fopen(filename, "rb");
+
+void print_modules(FILE* file) {
     if (file == NULL) {
-        printf("Could not open file '%s'.\n", filename);
+        printf("\033[1;31m[ERROR] File could not be opened.\033[0m\n");
         return;
     }
 
     Module module;
     int module_count = 0;
 
-    printf("Contents of '%s':\n", filename);
-    while (fread(&module, sizeof(Module), 1, file) == 1) {
-        printf("Module %d:\n", ++module_count);
-        printf("  Module Code   : %s\n", module.module_code);
-        printf("  Module Name   : %s\n", module.module_name);
-        printf("  Department Code: %s\n", module.dept_code);
-        printf("  Department Name: %s\n", module.dept_name);
-        printf("  Professor Code : %s\n", module.prof_code);
-        printf("  Professor Name : %s\n", module.prof_name);
-        printf("  Major Code     : %s\n", module.major_code);
-        printf("  Semester       : %d\n", module.semester);
-        printf("  Pass Mark      : %.2f\n", module.pass_mark);
-        printf("\n");
-    }
+    printf("\033[1;36m\n************ MODULE LIST ************\033[0m\n");
 
-    fclose(file);
+    while (fread(&module, sizeof(Module), 1, file) == 1) {
+        printf("\033[1;34m\n------------------------------------------------------------------\033[0m\n");
+        printf("\033[1;32mModule %d\033[0m\n", ++module_count);
+        printf("\033[1;33m  Module Code    :\033[0m %-15s\n", module.module_code);
+        printf("\033[1;33m  Module Name    :\033[0m %-15s\n", module.module_name);
+        printf("\033[1;33m  Department Code:\033[0m %-15s\n", module.dept_code);
+        printf("\033[1;33m  Department Name:\033[0m %-15s\n", module.dept_name);
+        printf("\033[1;33m  Professor Code :\033[0m %-15s\n", module.prof_code);
+        printf("\033[1;33m  Professor Name :\033[0m %-15s\n", module.prof_name);
+        printf("\033[1;33m  Major Code     :\033[0m %-15s\n", module.major_code);
+        printf("\033[1;33m  Semester       :\033[0m %-15d\n", module.semester);
+        printf("\033[1;33m  Pass Mark      :\033[0m %-15.2f\n", module.pass_mark);
+        printf("\033[1;34m--------------------------------------------------------------------\033[0m\n");
+    }
 
     if (module_count == 0) {
-        printf("No modules found in file '%s'.\n", filename);
-    } else {
-        printf("Total modules: %d\n", module_count);
+        printf("\033[1;31m[INFO] No modules found in the file.\033[0m\n");
+    }
+
+    printf("\033[1;36m\n************** END OF LIST **************\033[0m\n");
+
+    fclose(file);
+}
+
+
+
+void update_module(FILE* file, const char* module_code) {
+    Module module;
+
+    Node* lookup_table_module[TABLE_SIZE] = {0};
+    Node* lookup_table_prf[TABLE_SIZE] = {0};
+    Node* lookup_table_dpt[TABLE_SIZE] = {0};
+    const char* dir = "data";
+    char module_lookup_path[100], pfr_lookup_path[100], dpt_lookup_path[100];
+
+    snprintf(module_lookup_path, sizeof(module_lookup_path), "%s/module_lookup.dat", dir);
+    snprintf(pfr_lookup_path, sizeof(pfr_lookup_path), "%s/pfr_lookup.dat", dir);
+    snprintf(dpt_lookup_path, sizeof(dpt_lookup_path), "%s/dpt_lookup.dat", dir);
+
+    loadFromFile(lookup_table_module, module_lookup_path);
+    loadFromFile(lookup_table_prf, pfr_lookup_path);
+    loadFromFile(lookup_table_dpt, dpt_lookup_path);
+
+    int found = 0;
+
+    if (file == NULL) {
+        printf("\033[1;31mError: File could not be opened.\033[0m\n");
+        return;
+    }
+
+    while (fread(&module, sizeof(Module), 1, file)) {
+        if (strcmp(module.module_code, module_code) == 0) {
+            found = 1;
+
+            // Ask if they want to change the module name
+            printf("\033[1;34mCurrent Module Name: \033[0m%s\n", module.module_name);
+            printf("Would you like to change the module name? (y/n): ");
+            char change_name;
+            scanf(" %c", &change_name); // Space before %c to consume any leftover newline
+            if (change_name == 'y') {
+                printf("Enter new module name: ");
+                scanf(" %[^\n]", module.module_name);
+            }
+
+            // Ask if they want to change the professor details
+            printf("\033[1;34mCurrent Professor Code: \033[0m%s\n", module.prof_code);
+            printf("\033[1;34mCurrent Professor Name: \033[0m%s\n", search(lookup_table_prf, module.prof_code));
+            printf("Would you like to change the professor details? (y/n): ");
+            char change_prof;
+            scanf(" %c", &change_prof);
+            if (change_prof == 'y') {
+                printf("Enter new professor code: ");
+                scanf("%s", module.prof_code);
+                printf("Enter new professor name: ");
+                scanf(" %[^\n]", module.prof_name);
+            }
+
+            // Ask if they want to change department details
+            printf("\033[1;34mCurrent Department Code: \033[0m%s\n", module.dept_code);
+            printf("\033[1;34mCurrent Department Name: \033[0m%s\n", module.dept_name); 
+            printf("Would you like to change the department details? (y/n): ");
+            char change_dept;
+            scanf(" %c", &change_dept);
+            if (change_dept == 'y') {
+                printf("Enter new department code: ");
+                scanf("%s", module.dept_code);
+                printf("Enter new department name: ");
+                scanf(" %[^\n]", module.dept_name);
+            }
+
+            // Ask if they want to change the semester
+            printf("\033[1;34mCurrent Semester: \033[0m%d\n", module.semester);
+            printf("Would you like to change the semester? (y/n): ");
+            char change_semester;
+            scanf(" %c", &change_semester);
+            if (change_semester == 'y') {
+                printf("Enter new semester: ");
+                scanf("%d", &module.semester); 
+            }
+
+            // Ask if they want to change the pass mark
+            printf("\033[1;34mCurrent Pass Mark: \033[0m%.2f\n", module.pass_mark);
+            printf("Would you like to change the pass mark? (y/n): ");
+            char change_passmark;
+            scanf(" %c", &change_passmark);
+            if (change_passmark == 'y') {
+                printf("\033[1;33mEnter new pass mark: \033[0m");
+                scanf("%f", &module.pass_mark);
+            }
+
+            // Update hash table and file
+            update_hash(lookup_table_module, module.module_code, module.module_name);
+            insert(lookup_table_prf, module.prof_code, module.prof_name);
+            insert(lookup_table_dpt, module.dept_code, module.dept_name);
+            saveToFile(lookup_table_prf, pfr_lookup_path);
+            saveToFile(lookup_table_dpt, dpt_lookup_path);
+            saveToFile(lookup_table_module, module_lookup_path);
+
+            fseek(file, -(long)sizeof(Module), SEEK_CUR);
+            fwrite(&module, sizeof(Module), 1, file);
+            fflush(file);
+
+            printf("\033[1;32m[SUCCESS] Module updated successfully.\033[0m\n");
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("\033[1;31m[FAILED] Module with code %s not found.\033[0m\n", module_code);
     }
 }
+
+
+

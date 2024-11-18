@@ -5,8 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 
-char* add_major(FILE* file, Node* lookup_table_major[]){
+char* add_major(FILE* file){
     Major major;
+    Node* lookup_table_major[TABLE_SIZE] = {0};
     char major_lookup_path[100];
     char* rcode = (char*)malloc(sizeof(char));
     const char* dir = "data";
@@ -36,5 +37,21 @@ char* add_major(FILE* file, Node* lookup_table_major[]){
     return rcode;
 }
 
+void print_majors(FILE* file) {
+    if (file == NULL) {
+        printf("\033[1;31m[ERROR] File could not be opened.\033[0m\n");
+        return;
+    }
+
+    Major major;
+    while (fread(&major, sizeof(Major), 1, file)) {
+        printf("\n\033[1;34m----------------------------------------\033[0m\n"); 
+        printf("\033[1;32mMajor Code: \033[0m%s\n", major.major_code);  
+        printf("\033[1;32mMajor Name: \033[0m%s\n", major.major_name);  
+        printf("\033[1;34m----------------------------------------\033[0m\n"); 
+    }
+    fclose(file);
+
+}
 
 
