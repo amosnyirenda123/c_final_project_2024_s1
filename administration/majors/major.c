@@ -1,6 +1,7 @@
 #include "../students/student.h"
 #include "major.h"
 #include "../maps/map.h"
+#include "../../toast.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,10 +16,10 @@ char* add_major(FILE* file){
     snprintf(major_lookup_path, sizeof(major_lookup_path), "%s/major_lookup.dat", dir);
 
   
-    printf("Enter major code: ");
+    printMessage(INFO, "Enter major code: ");
     scanf("%s", major.major_code);
 
-    printf("Enter major name: ");
+    printMessage(INFO, "Enter major name: ");
     scanf(" %[^\n]", major.major_name); 
 
     loadFromFile(lookup_table_major, major_lookup_path);
@@ -27,7 +28,7 @@ char* add_major(FILE* file){
 
     fseek(file, 0, SEEK_END);
     if (fwrite(&major, sizeof(Major), 1, file) != 1) {
-        printf("Error writing to file.\n");
+        printMessage(ERROR, "Error writing to file.");
         return NULL;
     }
 
@@ -39,7 +40,7 @@ char* add_major(FILE* file){
 
 void print_majors(FILE* file) {
     if (file == NULL) {
-        printf("\033[1;31m[ERROR] File could not be opened.\033[0m\n");
+        printMessage(ERROR, "File could not be opened.");
         return;
     }
 

@@ -31,14 +31,14 @@ void print_student_yearly_results(Student *student, int start_semester);
 void populate_modules_for_student(Student *student, const char *major_code, int semester);
 void print_student_semester_results(Student *student, int semester);
 void assign_semester_modules(FILE* student_file, char *student_code, const char *major_code, int semester);
-void allocate_marks_to_student(FILE *student_file, const char student_code[CODE_LENGTH],const char major_code[CODE_LENGTH], int semester);
-//display all modules for a student
+void allocate_marks_to_student(FILE *student_file, const char student_code[STUDENT_CODE_LENGTH],const char major_code[MAJOR_CODE_LENGTH], int semester);
+
 void print_modules_for_semester(Student* student, int semester);
 void print_modules(FILE* file);
-void print_student_transcript(FILE *student_file, const char student_code[CODE_LENGTH], const char major_code[CODE_LENGTH], int start_semester);
+void print_student_transcript(FILE *student_file, const char student_code[STUDENT_CODE_LENGTH], const char major_code[MAJOR_CODE_LENGTH], int start_semester);
 void add_module(FILE* file);
 void update_module(FILE* file, const char* module_code);
 
-// void print_student_semester_results_pdf(HPDF_Doc pdf, HPDF_Page page, Student *student, int semester);
+
 
 #endif

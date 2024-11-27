@@ -19,6 +19,11 @@ long generate_unique_code() {
     return code;
 }
 
+void pause_execution(){
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    getchar();
+}
 void string_to_lowercase(char *str) {
     while (*str) {
         *str = tolower((unsigned char)*str);  

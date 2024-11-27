@@ -1,6 +1,7 @@
 #include "map.h"
+#include "../../toast.h"
 
-// Hash function using the DJB2 algorithm
+
 unsigned int hash(const char *key) {
     unsigned long hash = 5381;
     int c;
@@ -10,7 +11,7 @@ unsigned int hash(const char *key) {
     return hash % TABLE_SIZE;
 } 
 
-// Search for a key in the hash table
+
 char* search(Node* hashTable[], const char* key) {
     unsigned int index = hash(key);
     Node* current = hashTable[index];
@@ -95,8 +96,9 @@ void display(Node* hashTable[]) {
 
 void saveToFile(Node* hashTable[], const char* filename) {
     FILE* file = fopen(filename, "wb");
+    char message[MESSAGE_LENGTH];
     if (file == NULL) {
-        printf("Error opening file for appending.\n");
+        printMessage(ERROR, "Error opening file for writing.\n");
         return;
     }
 
@@ -109,25 +111,29 @@ void saveToFile(Node* hashTable[], const char* filename) {
     }
 
     fclose(file);
-    printf("Hash table saved to file: %s\n", filename);
+    snprintf(message, MESSAGE_LENGTH, "Hash table saved to file: %s\n", filename);
+    printMessage(SUCCESS, message);
 }
 
 
 void loadFromFile(Node* hashTable[], const char* filename) {
     FILE* file = fopen(filename, "rb");
+    char message[MESSAGE_LENGTH];
     if (file == NULL) {
-        // File does not exist, create a new empty file
-        printf("No previous hash table file '%s' found. Creating a new one.\n", filename);
+        
+        snprintf(message, MESSAGE_LENGTH, "No previous hash table file '%s' found. Creating a new one.\n", filename);
+        printMessage(NOT_FOUND, message);
         file = fopen(filename, "wb"); 
         if (file == NULL) {
-            perror("Error creating file");
+            printMessage(ERROR, "Error creating file\n");
             return;
         }
         fclose(file); 
 
         file = fopen(filename, "rb");
         if (file == NULL) {
-            printf("Error: Could not open newly created file '%s' for reading.\n", filename);
+            snprintf(message, MESSAGE_LENGTH, "Error: Could not open newly created file '%s' for reading.\n", filename);
+            printMessage(ERROR, message);
             return;
         }
         return;
@@ -161,6 +167,7 @@ void loadFromFile(Node* hashTable[], const char* filename) {
     }
 
     fclose(file);
-    printf("Hash table loaded from file: %s\n", filename);
+    snprintf(message, MESSAGE_LENGTH, "Hash table loaded from file: %s\n", filename);
+    printMessage(SUCCESS, message);
 }
 

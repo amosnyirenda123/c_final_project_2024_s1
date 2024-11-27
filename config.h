@@ -8,13 +8,30 @@
 #include "administration/majors/module.h"
 #include "administration/maps/map.h"
 
+#define PATH_LENGTH 100
+
 
 typedef struct {
-    char modules_path[100];
-    char students_path[100];
-    char major_path[100];
+    char modules_path[PATH_LENGTH];
+    char students_path[PATH_LENGTH];
+    char major_path[PATH_LENGTH];
+    char student_lookup_path[PATH_LENGTH];
+    char module_lookup_path[PATH_LENGTH];
+    char prf_lookup_path[PATH_LENGTH];
+    char dpt_lookup_path[PATH_LENGTH];
+    char major_lookup_path[PATH_LENGTH];
     const char* dir;
 } Config;
+
+typedef struct {
+    char *code;
+    char *major;
+    int semester;
+} StudentInfo;
+
+
+StudentInfo* getStudentDetails(const char *student_lookup_path, const char *major_lookup_path, int ctr);
+void freeStudentInfo(StudentInfo *student);
 
 void print_menu();
 void about_app();

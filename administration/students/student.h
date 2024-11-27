@@ -8,6 +8,8 @@
 #define MAX_WORD_LENGTH 80
 #define MAX_STUDENTS 1000
 #define CODE_LENGTH 20
+#define STUDENT_CODE_LENGTH 14
+#define MAJOR_CODE_LENGTH 10
 #define MAX_DURATION 3
 
 
@@ -29,10 +31,10 @@ typedef struct Student {
 
 void add_student(FILE *student_file);
 void find_student_and_print_details(FILE *student_file, const char code[CODE_LENGTH]);
-Student* find_student(FILE *student_file, const char code[CODE_LENGTH], const char major_code[CODE_LENGTH]);
-void update_student_details(FILE *student_file, const char student_code[CODE_LENGTH], const char major_code[CODE_LENGTH]);
+Student* find_student(FILE *student_file, const char student_code[STUDENT_CODE_LENGTH], const char major_code[MAJOR_CODE_LENGTH]);
+void update_student_details(FILE *student_file, const char student_code[STUDENT_CODE_LENGTH], const char major_code[MAJOR_CODE_LENGTH]);
 void display_all_students(FILE *student_file);
-void delete_student(FILE* student_file, const char student_code[CODE_LENGTH], const char major_code[CODE_LENGTH]);
+void delete_student(FILE* student_file, const char student_code[STUDENT_CODE_LENGTH], const char major_code[MAJOR_CODE_LENGTH]);
 
 // Student studentList[MAX_STUDENTS];
 

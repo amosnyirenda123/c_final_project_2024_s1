@@ -3,6 +3,8 @@
 #include "administration/majors/major.h"
 #include "administration/majors/module.h"
 #include "administration/maps/map.h"
+#include "administration/shared/utils.h"
+#include "toast.h"
 
 
 
@@ -20,8 +22,13 @@ void initialize_paths(Config* config){
 
     snprintf(config->modules_path, sizeof(config->modules_path), "%s/modules.dat", config->dir);
     snprintf(config->students_path, sizeof(config->students_path), "%s/student.dat", config->dir);
-
     snprintf(config->major_path, sizeof(config->major_path), "%s/majors.dat", config->dir);
+
+    // lookup paths
+    snprintf(config->student_lookup_path, sizeof(config->student_lookup_path), "%s/student_lookup.dat", config->dir);
+    snprintf(config->dpt_lookup_path, sizeof(config->dpt_lookup_path), "%s/dpt_lookup.dat", config->dir);
+    snprintf(config->prf_lookup_path, sizeof(config->prf_lookup_path), "%s/prf_lookup.dat", config->dir);
+    snprintf(config->major_lookup_path, sizeof(config->major_lookup_path), "%s/major_lookup.dat", config->dir);
 }
 
 void about_app() {
@@ -51,17 +58,20 @@ void about_app() {
 
 void wait_press_enter(){
     printf("\n\033[1;32mPress Enter to return to the menu...\033[0m\n");
-    getchar(); 
-    getchar(); 
+    pause_execution(); 
 }
 
 void print_menu() {
     clear_screen();
+    printf(YELLOW);
     printf("\n*****************************************************\n");
-    printf("**            WELCOME TO STUDENT MANAGEMENT       **\n");
+    printf("**      WELCOME TO OUR STUDENT MANAGEMENT         **\n");
     printf("*****************************************************\n");
     printf("**                MAIN MENU                       **\n");
     printf("*****************************************************\n");
+    
+    
+    printf(RESET);
 
     // Add Commands Section
     printf("\n\033[1;32m[1-3] Add Commands:\033[0m\n");
@@ -100,11 +110,12 @@ void print_menu() {
 
     // Miscellaneous
     printf("\n\033[1;37m[18-19] Miscellaneous:\033[0m\n");
-    printf("   18. About App\n");
+    printf("   18. Memory\n");
+    printf("   19. About App\n");
     printf("    0. Exit\n");
 
-    printf("\n*****************************************************\n");
-    printf("Select an option (1-20): ");
+    printf(YELLOW"\n*****************************************************\n"RESET);
+    printf(YELLOW"Select an option (1-20): "RESET);
 
 }
 
@@ -112,11 +123,11 @@ FILE* open_file(const char* filename, const char* mode){
     FILE *fptr;
     fptr = fopen(filename, mode);
     if (filename == NULL || mode == NULL) {
-        printf("\n\033[1;31m[ERROR] Filename or mode is NULL.\033[0m\n");
+        printMessage(ERROR, "Filename or mode is NULL.");
         return NULL;
     }
     if(fptr == NULL){
-        printf("\n\033[1;31m[ERROR] Could not open file in desired mode\033[0m\n");
+        printMessage(ERROR, "Could not open file in desired mode.");
         return NULL;
     }
     return fptr;
@@ -125,17 +136,88 @@ FILE* open_file(const char* filename, const char* mode){
 void close_file(FILE* fptr) {
     if (fptr != NULL) {
         fclose(fptr);
-        printf("\n\033[1;32m[INFO] File closed successfully.\033[0m\n");
     } else {
-        printf("\n\033[1;31m[ERROR] Invalid file pointer.\033[0m\n");
+        printMessage(ERROR, "Couldn't close file.");
+    }
+}
+
+
+StudentInfo* getStudentDetails(const char *student_lookup_path, const char *major_lookup_path, int ctr) {
+    StudentInfo *student = (StudentInfo *)malloc(sizeof(StudentInfo));
+    if (!student) {
+        perror("Failed to allocate memory for student");
+        exit(EXIT_FAILURE);
+    }
+    
+
+    student->code = NULL;
+    student->major = NULL;
+    student->semester = -1;
+
+    student->code = (char *)malloc(MAX_CODE_LENGTH * sizeof(char));
+    student->major = (char *)malloc(MAX_CODE_LENGTH * sizeof(char));
+    if (!student->code || !student->major) {
+        perror("Failed to allocate memory for student fields");
+        free(student);
+        exit(EXIT_FAILURE);
+    }
+
+    Node *buffer_table[TABLE_SIZE] = {0};
+    clear_screen();
+
+    
+    printf("\nEnter student identification number: ");
+    scanf("%49s", student->code); 
+
+    loadFromFile(buffer_table, student_lookup_path);
+    if (search(buffer_table, student->code) == NULL) {
+        printMessage(1, "Student ID not found. Terminating process.");
+        pause_execution();
+        free(student->code);
+        free(student->major);
+        free(student);
+        return NULL; 
+    }
+
+    
+    printf("\nEnter student major code: ");
+    scanf("%9s", student->major); 
+
+    loadFromFile(buffer_table, major_lookup_path);
+    if (search(buffer_table, student->major) == NULL) {
+        printMessage(1, "Major does not exist. Terminating process.");
+        pause_execution();
+        free(student->code);
+        free(student->major);
+        free(student);
+        return NULL; 
+    }
+
+    
+    if (ctr == 1) {
+        printf("\nEnter semester: ");
+        scanf("%d", &student->semester);
+    } else {
+        student->semester = 1;
+    }
+
+    return student; 
+}
+
+
+void freeStudentInfo(StudentInfo *student) {
+    if (student) {
+        free(student->code);
+        free(student->major);
+        free(student);
     }
 }
 
 
 
-
 void switch_option(int option){
     Config config;
+    Node* buffer_table[TABLE_SIZE] = {0};
     initialize_paths(&config);
     if (option == 1) {
         clear_screen();
@@ -184,20 +266,37 @@ void switch_option(int option){
          close_file(majors_file);
          wait_press_enter();
     }
+    else if(option == 9){
+        clear_screen();
+        char student_id[CODE_LENGTH], message[MESSAGE_LENGTH];
+        loadFromFile(buffer_table, config.student_lookup_path);
+        printMessage(INFO, "Enter student ID: ");
+        scanf("%s", student_id);
+        char* found = search(buffer_table, student_id);
+        if(found == NULL){
+            snprintf(message, MESSAGE_LENGTH,"Student with ID %s Not Found.", student_id);
+            printMessage(NOT_FOUND, message);
+            pause_execution();
+        }else{
+            snprintf(message, MESSAGE_LENGTH,"Full Name: %s", found);
+            printMessage(RES, message);
+            wait_press_enter();
+        }
+    }
     else if(option == 10){
         clear_screen();
         int semester;
         char code[MAX_CODE_LENGTH], major[10];
         FILE* students_file = open_file(config.students_path, "rb");
-        printf("\nEnter student identification number: ");
+        printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printf("\nEnter student major: ");
+        printMessage(INFO, "Enter student major: ");
         scanf("%s", major);
-        printf("\nEnter semester: ");
+        printMessage(INFO, "Enter semester: ");
         scanf("%d", &semester);
         Student* student = find_student(students_file, code, major);
         if(student == NULL){
-            printf("\033[1;31m[ERROR] No student found.\033[0m\n");
+            printMessage(NOT_FOUND, "No student found.");
             return;
         }else{
             print_student_semester_results(student, semester);
@@ -210,18 +309,19 @@ void switch_option(int option){
         int start_semester;
         char code[MAX_CODE_LENGTH], major[10];
 
-        printf("\nEnter student identification number: ");
+        printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printf("\nEnter student major: ");
+        printMessage(INFO, "Enter student major: ");
         scanf("%s", major);
-        printf("\nEnter start semester: ");
+
+        printMessage(INFO, "Enter start semester: ");
         scanf("%d", &start_semester);
 
         FILE* students_file = open_file(config.students_path, "rb");
 
         Student* student = find_student(students_file, code, major);
         if(student == NULL){
-            printf("\033[1;31m[ERROR] No student found.\033[0m\n");
+            printMessage(NOT_FOUND, "No student found.");
             return;
         }else{
             print_student_yearly_results(student, start_semester);
@@ -235,19 +335,35 @@ void switch_option(int option){
         int semester;
         char code[MAX_CODE_LENGTH], major[10];
 
-        printf("\nEnter student identification number: ");
+        printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printf("\nEnter student major: ");
-        scanf("%s", major);
-        printf("\nEnter semester: ");
-        scanf("%d", &semester);
+        loadFromFile(buffer_table, config.student_lookup_path);
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Student ID not found terminating process.");
+            pause_execution();
+            return;
+        }else{
+            printMessage(INFO, "Enter student major: ");
+            scanf("%s", major);
+            loadFromFile(buffer_table, config.major_lookup_path);
+            if(search(buffer_table, major) == NULL){
+                printMessage(NOT_FOUND, "Major does not exist terminating process.");
+                pause_execution();
+                return;
+            }else{
+                printMessage(INFO, "Enter semester: ");
+                scanf("%d", &semester);
+            }
+            
+        }
+        
 
         FILE* students_file = open_file(config.students_path, "rb");
 
         Student* student = find_student(students_file, code, major);
 
         if(student == NULL){
-            printf("\033[1;31m[ERROR] No student found.\033[0m\n");
+            printMessage(NOT_FOUND, "No student found.");
             return;
         }else{
             print_modules_for_semester(student, semester);
@@ -258,10 +374,27 @@ void switch_option(int option){
         clear_screen();
         char code[MAX_CODE_LENGTH], major[10];
 
-        printf("\nEnter student identification number: ");
+        printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printf("\nEnter student major code: ");
-        scanf("%s", major);
+        loadFromFile(buffer_table, config.student_lookup_path);
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Student ID not found terminating process.");
+            pause_execution();
+            return;
+        }else{
+            printMessage(INFO, "Enter student major: ");
+            scanf("%s", major);
+            loadFromFile(buffer_table, config.major_lookup_path);
+            if(search(buffer_table, major) == NULL){
+                printMessage(NOT_FOUND, "Major does not exist terminating process.");
+                pause_execution();
+                return;
+            }
+            
+        }
+
+
+
         FILE* students_file = open_file(config.students_path, "rb");
         delete_student(students_file, code, major);
         wait_press_enter();
@@ -271,9 +404,9 @@ void switch_option(int option){
         char code[MAX_CODE_LENGTH], major[10];
         FILE* students_file = open_file(config.students_path, "r+b");
 
-        printf("\nEnter student identification number: ");
+        printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printf("\nEnter student major: ");
+        printMessage(INFO, "Enter student major: ");
         scanf("%s", major);
         update_student_details(students_file, code, major);
         wait_press_enter();
@@ -283,7 +416,7 @@ void switch_option(int option){
         char code[MAX_CODE_LENGTH];
         FILE* modules_file = open_file(config.modules_path, "r+b");
 
-        printf("\nEnter Module Code: ");
+        printMessage(INFO, "Enter Module code: ");
         scanf("%s", code);
         update_module(modules_file, code);
         fclose(modules_file);
@@ -294,11 +427,11 @@ void switch_option(int option){
         int semester;
         char code[MAX_CODE_LENGTH], major[10];
 
-        printf("\nEnter student identification number: ");
+        printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printf("\nEnter student major: ");
+        printMessage(INFO, "Enter student major: ");
         scanf("%s", major);
-        printf("\nEnter semester: ");
+        printMessage(INFO, "Enter semester: ");
         scanf("%d", &semester);
 
         FILE* students_file = open_file(config.students_path, "r+b");
@@ -312,28 +445,44 @@ void switch_option(int option){
         int semester;
         char code[MAX_CODE_LENGTH], major[10];
 
-        printf("\nEnter student identification number: ");
+        printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printf("\nEnter student major: ");
-        scanf("%s", major);
-        printf("\nEnter semester: ");
-        scanf("%d", &semester);
+        loadFromFile(buffer_table, config.student_lookup_path);
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Student ID not found terminating process.");
+            pause_execution();
+            return;
+        }else{
+            printMessage(INFO, "Enter student major: ");
+            scanf("%s", major);
+            loadFromFile(buffer_table, config.major_lookup_path);
+            if(search(buffer_table, major) == NULL){
+                printMessage(NOT_FOUND, "Major does not exist terminating process.");
+                pause_execution();
+                return;
+            }else{
+                printMessage(INFO, "Enter semester: ");
+                scanf("%d", &semester);
+            }
+            
+        }
+
 
         FILE* students_file = open_file(config.students_path, "r+b");
         assign_semester_modules(students_file, code, major, semester);
         close_file(students_file);
         wait_press_enter();
     }
-    else if (option == 18) {
+    else if (option == 19) {
         about_app();
     }
     else if(option == 0){
         clear_screen();
-        printf("\033[1;32m[INFO] You are exiting the application. Goodbye!\033[0m\n");
+        printf(YELLOW"You are exiting the application. GoodBye!"RESET);
     }
     else {
         clear_screen();
-        printf("Invalid option! Please try again.\n");
+        printMessage(ERROR, "Invalid option. ");
     }
 }
 
