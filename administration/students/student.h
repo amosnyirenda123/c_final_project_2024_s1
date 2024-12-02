@@ -33,8 +33,10 @@ void add_student(FILE *student_file);
 void find_student_and_print_details(FILE *student_file, const char code[CODE_LENGTH]);
 Student* find_student(FILE *student_file, const char student_code[STUDENT_CODE_LENGTH], const char major_code[MAJOR_CODE_LENGTH]);
 void update_student_details(FILE *student_file, const char student_code[STUDENT_CODE_LENGTH], const char major_code[MAJOR_CODE_LENGTH]);
-void display_all_students(FILE *student_file);
+void display_students_by_major(FILE *student_file, const char major_code[MAJOR_CODE_LENGTH]);
+void display_all_students(FILE* student_file);
 void delete_student(FILE* student_file, const char student_code[STUDENT_CODE_LENGTH], const char major_code[MAJOR_CODE_LENGTH]);
+void print_student_summary(Student *student);
 
 // Student studentList[MAX_STUDENTS];
 

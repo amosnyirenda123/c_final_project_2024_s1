@@ -349,7 +349,7 @@ void print_modules_for_semester(Student* student, int semester) {
     char* major_name = search(lookup_table_major, student->major.major_code);
     
     if (semester < 1 || semester > MAX_SEMESTERS) {
-        printf("\033[1;31m[ERROR]Error: Invalid semester number. Valid range is 1 to %d.\033[0m\n", MAX_SEMESTERS);
+        printf("\033[1;31m[ERROR]: Invalid semester number. Valid range is 1 to %d.\033[0m\n", MAX_SEMESTERS);
         return;
     }
 
@@ -388,27 +388,36 @@ void print_modules_for_semester(Student* student, int semester) {
 
 
 
-void print_modules(FILE* file) {
+void print_modules(FILE* file, const char major_code[MAJOR_CODE_LENGTH], int semester) {
     if (file == NULL) {
         printMessage(ERROR, "File could not be opened.\n");
+        return;
+    }
+
+    if (semester < 1 || semester > MAX_SEMESTERS) {
+        printf("\033[1;31m[ERROR]Error: Invalid semester number. Valid range is 1 to %d.\033[0m\n", MAX_SEMESTERS);
         return;
     }
 
     Module module;
     int module_count = 0;
     while (fread(&module, sizeof(Module), 1, file) == 1) {
-        printf("\033[1;34m\n------------------------------------------------------------------\033[0m\n");
-        printf("\033[1;32mModule %d\033[0m\n", ++module_count);
-        printf("\033[1;33m  Module Code    :\033[0m %-15s\n", module.module_code);
-        printf("\033[1;33m  Module Name    :\033[0m %-15s\n", module.module_name);
-        printf("\033[1;33m  Department Code:\033[0m %-15s\n", module.dept_code);
-        printf("\033[1;33m  Department Name:\033[0m %-15s\n", module.dept_name);
-        printf("\033[1;33m  Professor Code :\033[0m %-15s\n", module.prof_code);
-        printf("\033[1;33m  Professor Name :\033[0m %-15s\n", module.prof_name);
-        printf("\033[1;33m  Major Code     :\033[0m %-15s\n", module.major_code);
-        printf("\033[1;33m  Semester       :\033[0m %-15d\n", module.semester);
-        printf("\033[1;33m  Pass Mark      :\033[0m %-15.2f\n", module.pass_mark);
-        printf("\033[1;34m\n------------------------------------------------------------------\033[0m\n");
+
+        if(strcmp(module.major_code, major_code) == 0 && module.semester == semester){
+            printf("\033[1;34m\n------------------------------------------------------------------\033[0m\n");
+            printf("\033[1;32mModule %d\033[0m\n", ++module_count);
+            printf("\033[1;33m  Module Code    :\033[0m %-15s\n", module.module_code);
+            printf("\033[1;33m  Module Name    :\033[0m %-15s\n", module.module_name);
+            printf("\033[1;33m  Department Code:\033[0m %-15s\n", module.dept_code);
+            printf("\033[1;33m  Department Name:\033[0m %-15s\n", module.dept_name);
+            printf("\033[1;33m  Professor Code :\033[0m %-15s\n", module.prof_code);
+            printf("\033[1;33m  Professor Name :\033[0m %-15s\n", module.prof_name);
+            printf("\033[1;33m  Major Code     :\033[0m %-15s\n", module.major_code);
+            printf("\033[1;33m  Semester       :\033[0m %-15d\n", module.semester);
+            printf("\033[1;33m  Pass Mark      :\033[0m %-15.2f\n", module.pass_mark);
+            printf("\033[1;34m\n------------------------------------------------------------------\033[0m\n");
+        }
+        
     }
 
     if (module_count == 0) {

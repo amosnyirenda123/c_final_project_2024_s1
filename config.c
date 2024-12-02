@@ -7,8 +7,6 @@
 #include "toast.h"
 
 
-
-
 void clear_screen() {
     #if defined(_WIN32) || defined(_WIN64)
         system("cls"); 
@@ -29,6 +27,7 @@ void initialize_paths(Config* config){
     snprintf(config->dpt_lookup_path, sizeof(config->dpt_lookup_path), "%s/dpt_lookup.dat", config->dir);
     snprintf(config->prf_lookup_path, sizeof(config->prf_lookup_path), "%s/prf_lookup.dat", config->dir);
     snprintf(config->major_lookup_path, sizeof(config->major_lookup_path), "%s/major_lookup.dat", config->dir);
+    snprintf(config->module_lookup_path, sizeof(config->module_lookup_path), "%s/module_lookup.dat", config->dir);
 }
 
 void about_app() {
@@ -83,7 +82,7 @@ void print_menu() {
     printf("\n\033[1;34m[4-7] Display Commands:\033[0m\n");
     printf("   4. Display All Students\n");
     printf("   5. Display Students by Major\n");
-    printf("   6. Display All Modules\n");
+    printf("   6. Display Modules by Major & Semester\n");
     printf("   7. Display All Majors\n");
 
     // Search Commands Section
@@ -93,9 +92,9 @@ void print_menu() {
 
     // Print Commands Section
     printf("\n\033[1;36m[10-12] Print Commands:\033[0m\n");
-    printf("   10. Print Semester Results\n");
-    printf("   11. Print Yearly Transcript\n");
-    printf("   12. Print Semester Modules\n");
+    printf("   10. Print Student Semester Results\n");
+    printf("   11. Print Student Yearly Transcript\n");
+    printf("   12. Print Student Semester Modules\n");
 
     // Delete Commands Section
     printf("\n\033[1;31m[13] Delete Command:\033[0m\n");
@@ -110,8 +109,7 @@ void print_menu() {
 
     // Miscellaneous
     printf("\n\033[1;37m[18-19] Miscellaneous:\033[0m\n");
-    printf("   18. Memory\n");
-    printf("   19. About App\n");
+    printf("   18. About App\n");
     printf("    0. Exit\n");
 
     printf(YELLOW"\n*****************************************************\n"RESET);
@@ -244,19 +242,51 @@ void switch_option(int option){
         clear_screen();
         FILE* students_file = open_file(config.students_path, "rb");
         display_all_students(students_file);
+        wait_press_enter();
+    }
+    else if(option == 5){
+        clear_screen();
+        char code[MAX_CODE_LENGTH];
+        printMessage(INFO, "Enter Major Code: ");
+        scanf("%s", code);
+        loadFromFile(buffer_table, config.major_lookup_path);
+
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Major code does not exist. Terminating Process.....");
+            pause_execution();
+            return;
+        }
+
+
+        FILE* students_file = open_file(config.students_path, "rb");
+        display_students_by_major(students_file, code);
         close_file(students_file);
         wait_press_enter();
     }
     else if(option == 6){
         clear_screen();
+        int semester;
+        char code[MAX_CODE_LENGTH];
+        
+
+        printMessage(INFO, "Enter Major Code: ");
+        scanf("%s", code);
+        loadFromFile(buffer_table, config.major_lookup_path);
+        
+
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Major code does not exist. Terminating Process.....");
+            pause_execution();
+            return;
+        }else{
+            printMessage(INFO, "Enter Semester Number: ");
+            scanf("%d", &semester);
+        }
+
+
         FILE* modules_file = open_file(config.modules_path, "rb");
-        print_modules(modules_file);
+        print_modules(modules_file, code, semester);
         close_file(modules_file);
-        wait_press_enter();
-    }
-    else if(option == 5){
-        clear_screen();
-        // TODO: add implementation
         wait_press_enter();
     }
     else if(option == 7){
@@ -265,6 +295,43 @@ void switch_option(int option){
          print_majors(majors_file);
          close_file(majors_file);
          wait_press_enter();
+    }
+    else if(option == 8){
+        clear_screen();
+        int semester;
+        char code[MAX_CODE_LENGTH], major[10];
+        
+        Student* student;
+
+        printMessage(INFO, "Enter student identification number: ");
+        scanf("%s", code);
+        loadFromFile(buffer_table, config.student_lookup_path);
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Student ID not found terminating process.........");
+            pause_execution();
+            return;
+        }else{
+            printMessage(INFO, "Enter student major: ");
+            scanf("%s", major);
+            loadFromFile(buffer_table, config.major_lookup_path);
+            if(search(buffer_table, major) == NULL){
+                printMessage(NOT_FOUND, "Major does not exist terminating process.......");
+                pause_execution();
+                return;
+            }
+            
+        }
+
+        FILE* student_file = open_file(config.students_path, "rb");
+        student = find_student(student_file, code, major);
+
+        if(student != NULL){
+            print_student_summary(student);
+            wait_press_enter();
+        }else{
+            printMessage(ERROR, "Something went wrong. Terminating Process.....");
+            wait_press_enter();
+        }
     }
     else if(option == 9){
         clear_screen();
@@ -287,13 +354,31 @@ void switch_option(int option){
         clear_screen();
         int semester;
         char code[MAX_CODE_LENGTH], major[10];
-        FILE* students_file = open_file(config.students_path, "rb");
+
         printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printMessage(INFO, "Enter student major: ");
-        scanf("%s", major);
-        printMessage(INFO, "Enter semester: ");
-        scanf("%d", &semester);
+        loadFromFile(buffer_table, config.student_lookup_path);
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Student ID not found terminating process.........");
+            pause_execution();
+            return;
+        }else{
+            printMessage(INFO, "Enter student major: ");
+            scanf("%s", major);
+            loadFromFile(buffer_table, config.major_lookup_path);
+            if(search(buffer_table, major) == NULL){
+                printMessage(NOT_FOUND, "Major does not exist terminating process.......");
+                pause_execution();
+                return;
+            }else{
+                printMessage(INFO, "Enter semester: ");
+                scanf("%d", &semester);
+            }
+            
+        }
+
+
+        FILE* students_file = open_file(config.students_path, "rb");
         Student* student = find_student(students_file, code, major);
         if(student == NULL){
             printMessage(NOT_FOUND, "No student found.");
@@ -311,11 +396,25 @@ void switch_option(int option){
 
         printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printMessage(INFO, "Enter student major: ");
-        scanf("%s", major);
-
-        printMessage(INFO, "Enter start semester: ");
-        scanf("%d", &start_semester);
+        loadFromFile(buffer_table, config.student_lookup_path);
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Student ID not found terminating process........");
+            pause_execution();
+            return;
+        }else{
+            printMessage(INFO, "Enter student major: ");
+            scanf("%s", major);
+            loadFromFile(buffer_table, config.major_lookup_path);
+            if(search(buffer_table, major) == NULL){
+                printMessage(NOT_FOUND, "Major does not exist terminating process........");
+                pause_execution();
+                return;
+            }else{
+                printMessage(INFO, "Enter start semester: ");
+                scanf("%d", &start_semester);
+            }
+            
+        }
 
         FILE* students_file = open_file(config.students_path, "rb");
 
@@ -339,7 +438,7 @@ void switch_option(int option){
         scanf("%s", code);
         loadFromFile(buffer_table, config.student_lookup_path);
         if(search(buffer_table, code) == NULL){
-            printMessage(NOT_FOUND, "Student ID not found terminating process.");
+            printMessage(NOT_FOUND, "Student ID not found terminating process......");
             pause_execution();
             return;
         }else{
@@ -347,7 +446,7 @@ void switch_option(int option){
             scanf("%s", major);
             loadFromFile(buffer_table, config.major_lookup_path);
             if(search(buffer_table, major) == NULL){
-                printMessage(NOT_FOUND, "Major does not exist terminating process.");
+                printMessage(NOT_FOUND, "Major does not exist terminating process........");
                 pause_execution();
                 return;
             }else{
@@ -378,7 +477,7 @@ void switch_option(int option){
         scanf("%s", code);
         loadFromFile(buffer_table, config.student_lookup_path);
         if(search(buffer_table, code) == NULL){
-            printMessage(NOT_FOUND, "Student ID not found terminating process.");
+            printMessage(NOT_FOUND, "Student ID not found terminating process.......");
             pause_execution();
             return;
         }else{
@@ -386,7 +485,7 @@ void switch_option(int option){
             scanf("%s", major);
             loadFromFile(buffer_table, config.major_lookup_path);
             if(search(buffer_table, major) == NULL){
-                printMessage(NOT_FOUND, "Major does not exist terminating process.");
+                printMessage(NOT_FOUND, "Major does not exist terminating process......");
                 pause_execution();
                 return;
             }
@@ -406,18 +505,41 @@ void switch_option(int option){
 
         printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printMessage(INFO, "Enter student major: ");
-        scanf("%s", major);
+        loadFromFile(buffer_table, config.student_lookup_path);
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Student ID not found terminating process.");
+            pause_execution();
+            return;
+        }else{
+            printMessage(INFO, "Enter student major: ");
+            scanf("%s", major);
+            loadFromFile(buffer_table, config.major_lookup_path);
+            if(search(buffer_table, major) == NULL){
+                printMessage(NOT_FOUND, "Major does not exist terminating process.");
+                pause_execution();
+                return;
+            }
+        }
+
         update_student_details(students_file, code, major);
         wait_press_enter();
     }
     else if(option == 15){
         clear_screen();
         char code[MAX_CODE_LENGTH];
-        FILE* modules_file = open_file(config.modules_path, "r+b");
+        
 
         printMessage(INFO, "Enter Module code: ");
         scanf("%s", code);
+        loadFromFile(buffer_table, config.module_lookup_path);
+
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Module code does not exist. Terminating Process.....");
+            pause_execution();
+            return;
+        }
+
+        FILE* modules_file = open_file(config.modules_path, "r+b");
         update_module(modules_file, code);
         fclose(modules_file);
         wait_press_enter();
@@ -429,10 +551,25 @@ void switch_option(int option){
 
         printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
-        printMessage(INFO, "Enter student major: ");
-        scanf("%s", major);
-        printMessage(INFO, "Enter semester: ");
-        scanf("%d", &semester);
+        loadFromFile(buffer_table, config.student_lookup_path);
+        if(search(buffer_table, code) == NULL){
+            printMessage(NOT_FOUND, "Student ID not found terminating process.");
+            pause_execution();
+            return;
+        }else{
+            printMessage(INFO, "Enter student major: ");
+            scanf("%s", major);
+            loadFromFile(buffer_table, config.major_lookup_path);
+            if(search(buffer_table, major) == NULL){
+                printMessage(NOT_FOUND, "Major does not exist terminating process.");
+                pause_execution();
+                return;
+            }else{
+                printMessage(INFO, "Enter semester: ");
+                scanf("%d", &semester);
+            }
+            
+        }
 
         FILE* students_file = open_file(config.students_path, "r+b");
         allocate_marks_to_student(students_file, code, major, semester);
@@ -473,12 +610,12 @@ void switch_option(int option){
         close_file(students_file);
         wait_press_enter();
     }
-    else if (option == 19) {
+    else if (option == 18) {
         about_app();
     }
     else if(option == 0){
         clear_screen();
-        printf(YELLOW"You are exiting the application. GoodBye!"RESET);
+        printf(GREEN"\nThank you for using our application! Your session has ended successfully. See you next time!\n"RESET);
     }
     else {
         clear_screen();

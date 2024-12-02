@@ -34,7 +34,7 @@ void assign_semester_modules(FILE* student_file, char *student_code, const char 
 void allocate_marks_to_student(FILE *student_file, const char student_code[STUDENT_CODE_LENGTH],const char major_code[MAJOR_CODE_LENGTH], int semester);
 
 void print_modules_for_semester(Student* student, int semester);
-void print_modules(FILE* file);
+void print_modules(FILE* file, const char major_code[MAJOR_CODE_LENGTH], int semester);
 void print_student_transcript(FILE *student_file, const char student_code[STUDENT_CODE_LENGTH], const char major_code[MAJOR_CODE_LENGTH], int start_semester);
 void add_module(FILE* file);
 void update_module(FILE* file, const char* module_code);

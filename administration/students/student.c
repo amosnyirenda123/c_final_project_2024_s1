@@ -289,11 +289,11 @@ void find_student_and_print_details(FILE *student_file, const char code[CODE_LEN
 }
 
 
-void display_all_students(FILE *student_file)
+void display_students_by_major(FILE *student_file, const char major_code[MAJOR_CODE_LENGTH])
 {
     Student student;
     fseek(student_file, 0, SEEK_SET);
-    int count = 1;
+    int count = 0;
 
     // printf("List of Students\n");
     printMessage(INFO, "List of Students\n");
@@ -302,12 +302,72 @@ void display_all_students(FILE *student_file)
     printf("----------------------------------------------------------------------------------------------------------------------------------------\n");
 
     while (fread(&student, sizeof(Student), 1, student_file) == 1) {
-        printf("%d|\t%-15s | %-15s | %-15s | %-20s | %-30s\n", count,
+        if(strcmp(student.major.major_code, major_code) == 0){
+            printf("%d|\t%-15s | %-15s | %-15s | %-20s | %-30s\n", count + 1,
             student.l_name, student.f_name, student.major.major_code, student.code, student.institutional_email);
-        count++;
+            count++;
+        }
+        
     }
 
+    if(count == 0){
+        printMessage(RES, "No students in requested major.");
+    }
     printf("----------------------------------------------------------------------------------------------------------------------------------------\n");
     fclose(student_file);
 }
 
+void display_all_students(FILE* student_file){
+    Student student;
+    fseek(student_file, 0, SEEK_SET);
+    int count = 0;
+
+    printMessage(INFO, "List of Students\n");
+    printf("----------------------------------------------------------------------------------------------------------------------------------------\n");
+    printf("%s|\t%-15s | %-15s | %-15s | %-20s | %-30s\n", "#", "Last Name", "First Name", "Major", "Code", "Email");
+    printf("----------------------------------------------------------------------------------------------------------------------------------------\n");
+
+    while (fread(&student, sizeof(Student), 1, student_file) == 1) {
+        printf("%d|\t%-15s | %-15s | %-15s | %-20s | %-30s\n", count + 1,
+        student.l_name, student.f_name, student.major.major_code, student.code, student.institutional_email);
+        count++;
+    }
+
+    if(count == 0){
+        printMessage(NOT_FOUND, "No students found.");
+    }
+    printf("----------------------------------------------------------------------------------------------------------------------------------------\n");
+    fclose(student_file);
+}
+
+
+void print_student_summary(Student *student) {
+ printf("\n---------------------------------------------------------------\n");
+    printf("                        Student Summary\n");
+    printf("---------------------------------------------------------------\n");
+    printf("Full Name:\t\t%s %s\n", student->f_name, student->l_name);
+    printf("Date of Birth:\t\t%02d-%02d-%d\n", student->s_date_of_birth.day,
+           student->s_date_of_birth.month, student->s_date_of_birth.year);
+    printf("Gender:\t\t\t%c\n", student->gender);
+    printf("Student Code:\t\t%s\n", student->code);
+    printf("Institutional Email:\t%s\n", student->institutional_email);
+    printf("Major:\t\t\t%s (%s)\n", student->major.major_name, student->major.major_code);
+
+    printf("\nSemester Averages:\n");
+    printf("---------------------------------------------------------------\n");
+    printf("| Semester | Academic Year  | Modules | Average Mark |\n");
+    printf("---------------------------------------------------------------\n");
+
+    for (int i = 0; i < MAX_SEM; i++) {
+        Semester *sem = &student->major.semester[i];
+        if (sem->module_count > 0) {
+            printf("|    %2d    |\t%4d-%4d\t|\t %2d\t |\t   %.2f   |\n",
+                   i + 1,
+                   sem->academic_year.start_year,
+                   sem->academic_year.end_year,
+                   sem->module_count,
+                   sem->average_mark);
+        }
+    }
+    printf("---------------------------------------------------------------\n");
+}
