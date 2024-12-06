@@ -43,7 +43,6 @@ void add_student(FILE *student_file)
     // setting module count to zero
     for(int i = 0; i < MAX_SEMESTERS + 1; i++){
         s_details.major.semester[i].module_count = 0;
-
     }
     // Assign Modules based on Major
     populate_modules_for_student(&s_details, s_details.major.major_code, 1);
@@ -93,6 +92,7 @@ void delete_student(FILE* student_file, const char student_code[STUDENT_CODE_LEN
         return;
     }
 
+    
     const char* dir = "data";
     char tempfile_path[100];
     char students_path[100];

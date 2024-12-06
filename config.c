@@ -473,6 +473,15 @@ void switch_option(int option){
         clear_screen();
         char code[MAX_CODE_LENGTH], major[10];
 
+        char warning_input;
+
+        printMessage(WARNING, "Deleting will permanently erase all related information. This action cannot be undone. Are you sure you want to proceed? (y/n): ");
+        scanf(" %c", &warning_input);
+
+        if(warning_input == 'n'){
+            return;
+        }
+
         printMessage(INFO, "Enter student identification number: ");
         scanf("%s", code);
         loadFromFile(buffer_table, config.student_lookup_path);

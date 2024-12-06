@@ -164,7 +164,6 @@ void add_module(FILE* file) {
     scanf("%d", &sem_temp);
     module.semester = (sem_temp > 0 && sem_temp <= MAX_SEMESTERS) ? sem_temp : 1;
 
-    printf("Enter pass mark: ");
     printMessage(INFO, "Enter pass mark: ");
     scanf("%f", &module.pass_mark);
 
@@ -315,6 +314,7 @@ void populate_modules_for_student(Student *student, const char *major_code, int 
             strcpy(student->major.semester[semester - 1].modules[module_count].prof_code, module->prof_code);
             strcpy(student->major.semester[semester - 1].modules[module_count].prof_name, module->prof_name);
             strcpy(student->major.semester[semester - 1].modules[module_count].major_code, major_code);
+            strncpy(student->major.semester[semester - 1].modules[module_count].pass_status, "UNASSIGNED", 20);
             student->major.semester[semester - 1].modules[module_count].pass_mark = module->pass_mark;
             student->major.semester[semester - 1].modules[module_count].semester = module->semester;
             student->major.semester[semester - 1].academic_year.start_year = start_year;
@@ -363,6 +363,7 @@ void print_modules_for_semester(Student* student, int semester) {
         }
         
         printf("Semester %d:\n", semester);
+        printf("Full Name: %s %s\n", student->l_name, student->f_name);
         printf("\033[1;34m\033[1m**************************************************************************************************************************************************\n\033[0m");
 
        
