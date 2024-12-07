@@ -340,34 +340,92 @@ void display_all_students(FILE* student_file){
     fclose(student_file);
 }
 
+int compute_student_rank(FILE *sfp, Student *current_student, int semester_index){
+    Student *temp_student = malloc(sizeof(Student));
+    int rank = 1;
+
+    rewind(sfp); 
+    while (fread(temp_student, sizeof(Student), 1, sfp) == 1) {
+        if (strcmp(temp_student->major.major_code, current_student->major.major_code) == 0 &&
+            strcmp(temp_student->code, current_student->code) != 0 && temp_student->major.semester[semester_index].academic_year.start_year == current_student->major.semester[semester_index].academic_year.start_year && temp_student->major.semester[semester_index].academic_year.end_year == current_student->major.semester[semester_index].academic_year.end_year) {
+            float avg_other = sum_of_marks(temp_student->major.semester[semester_index].modules,
+                                            temp_student->major.semester[semester_index].module_count) /
+                               temp_student->major.semester[semester_index].module_count;
+            if (avg_other > current_student->major.semester[semester_index].average_mark) {
+                rank++;
+            }
+        }
+    }
+
+    free(temp_student);
+    return rank;
+}
+
+int compute_student_rank_module(FILE *sfp, Student *current_student, int semester,int module_index){
+    Student *temp_student = malloc(sizeof(Student));
+    int rank = 1;
+
+    rewind(sfp); 
+    while (fread(temp_student, sizeof(Student), 1, sfp) == 1) {
+        if (strcmp(temp_student->major.major_code, current_student->major.major_code) == 0 &&
+            strcmp(temp_student->code, current_student->code) != 0 && temp_student->major.semester[semester].academic_year.start_year == current_student->major.semester[semester].academic_year.start_year && temp_student->major.semester[semester].academic_year.end_year == current_student->major.semester[semester].academic_year.end_year) {
+            if (temp_student->major.semester[semester].modules[module_index].mark > current_student->major.semester[semester].modules[module_index].mark) {
+                rank++;
+            }
+        }
+    }
+
+    free(temp_student);
+    return rank;
+}
+
 
 void print_student_summary(Student *student) {
- printf("\n---------------------------------------------------------------\n");
+    Node* lookup_table_major[TABLE_SIZE] = {0};
+    char major_lookup_path[100], student_file_path[100];
+    FILE *sfp;
+    int student_rank;
+    const char* dir = "data";
+    snprintf(major_lookup_path, sizeof(major_lookup_path), "%s/major_lookup.dat", dir);
+    snprintf(student_file_path, sizeof(student_file_path), "%s/student.dat", dir);
+    loadFromFile(lookup_table_major, major_lookup_path);
+    printf(BLUE"----------------------------------------------------------------------------------------\n");
     printf("                        Student Summary\n");
-    printf("---------------------------------------------------------------\n");
-    printf("Full Name:\t\t%s %s\n", student->f_name, student->l_name);
+    printf("----------------------------------------------------------------------------------------\n"RESET);
+    printf(YELLOW"Full Name:\t\t%s %s\n", student->f_name, student->l_name);
     printf("Date of Birth:\t\t%02d-%02d-%d\n", student->s_date_of_birth.day,
            student->s_date_of_birth.month, student->s_date_of_birth.year);
     printf("Gender:\t\t\t%c\n", student->gender);
     printf("Student Code:\t\t%s\n", student->code);
     printf("Institutional Email:\t%s\n", student->institutional_email);
-    printf("Major:\t\t\t%s (%s)\n", student->major.major_name, student->major.major_code);
+    if(search(lookup_table_major, student->major.major_code) != NULL){
+        printf("Major:\t\t\t%s (%s)\n"RESET, search(lookup_table_major, student->major.major_code), student->major.major_code);
+    }else{
+        printf("Major:\t\t\t%s (%s)\n"RESET, student->major.major_name, student->major.major_code);
+    }
+    
+    sfp = fopen(student_file_path, "rb");
+    if(sfp == NULL){
+        student_rank = -1;
+        return;
+    }
+    
 
-    printf("\nSemester Averages:\n");
-    printf("---------------------------------------------------------------\n");
-    printf("| Semester | Academic Year  | Modules | Average Mark |\n");
-    printf("---------------------------------------------------------------\n");
+    printf(BLUE"----------------------------------------------------------------------------------------\n"RESET);
+    printf(BLUE"%-10s | %-10s | %-10s | %-18s | %-20s \n"RESET, "SEMESTER", "N_MOD" ,"AVERAGE", "RANK", "ACADEMIC YEAR");
+    printf(BLUE"----------------------------------------------------------------------------------------\n"RESET);
 
     for (int i = 0; i < MAX_SEM; i++) {
         Semester *sem = &student->major.semester[i];
         if (sem->module_count > 0) {
-            printf("|    %2d    |\t%4d-%4d\t|\t %2d\t |\t   %.2f   |\n",
-                   i + 1,
-                   sem->academic_year.start_year,
-                   sem->academic_year.end_year,
-                   sem->module_count,
-                   sem->average_mark);
+            sem->average_mark = sum_of_marks(sem->modules, sem->module_count) / sem->module_count;
+        }
+        student_rank = compute_student_rank(sfp, student, i);
+        if (sem->module_count > 0) {
+            printf("%-10d | %-10d | %-10.2f | %-18d | %d / %d \n", i + 1, sem->module_count, sem->average_mark, student_rank, sem->academic_year.start_year, sem->academic_year.end_year);
         }
     }
-    printf("---------------------------------------------------------------\n");
+
+    printf("----------------------------------------------------------------------------------------\n");
+    fclose(sfp);
 }

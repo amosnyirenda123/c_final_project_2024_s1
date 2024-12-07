@@ -7,6 +7,14 @@
 #include "toast.h"
 
 
+void to_uppercase(char *str) {
+    while (*str) {
+        *str = toupper((unsigned char)*str);  
+        str++; 
+    }
+}
+
+
 void clear_screen() {
     #if defined(_WIN32) || defined(_WIN64)
         system("cls"); 
@@ -250,8 +258,8 @@ void switch_option(int option){
         printMessage(INFO, "Enter Major Code: ");
         scanf("%s", code);
         loadFromFile(buffer_table, config.major_lookup_path);
-
-        if(search(buffer_table, code) == NULL){
+        to_uppercase(code);
+        if(search(buffer_table, code ) == NULL){
             printMessage(NOT_FOUND, "Major code does not exist. Terminating Process.....");
             pause_execution();
             return;
@@ -271,6 +279,7 @@ void switch_option(int option){
 
         printMessage(INFO, "Enter Major Code: ");
         scanf("%s", code);
+        to_uppercase(code);
         loadFromFile(buffer_table, config.major_lookup_path);
         
 
@@ -313,6 +322,7 @@ void switch_option(int option){
         }else{
             printMessage(INFO, "Enter student major: ");
             scanf("%s", major);
+            to_uppercase(major);
             loadFromFile(buffer_table, config.major_lookup_path);
             if(search(buffer_table, major) == NULL){
                 printMessage(NOT_FOUND, "Major does not exist terminating process.......");
@@ -365,6 +375,7 @@ void switch_option(int option){
         }else{
             printMessage(INFO, "Enter student major: ");
             scanf("%s", major);
+            to_uppercase(major);
             loadFromFile(buffer_table, config.major_lookup_path);
             if(search(buffer_table, major) == NULL){
                 printMessage(NOT_FOUND, "Major does not exist terminating process.......");
@@ -404,6 +415,7 @@ void switch_option(int option){
         }else{
             printMessage(INFO, "Enter student major: ");
             scanf("%s", major);
+            to_uppercase(major);
             loadFromFile(buffer_table, config.major_lookup_path);
             if(search(buffer_table, major) == NULL){
                 printMessage(NOT_FOUND, "Major does not exist terminating process........");
@@ -444,6 +456,7 @@ void switch_option(int option){
         }else{
             printMessage(INFO, "Enter student major: ");
             scanf("%s", major);
+            to_uppercase(major);
             loadFromFile(buffer_table, config.major_lookup_path);
             if(search(buffer_table, major) == NULL){
                 printMessage(NOT_FOUND, "Major does not exist terminating process........");
@@ -492,6 +505,7 @@ void switch_option(int option){
         }else{
             printMessage(INFO, "Enter student major: ");
             scanf("%s", major);
+            to_uppercase(major);
             loadFromFile(buffer_table, config.major_lookup_path);
             if(search(buffer_table, major) == NULL){
                 printMessage(NOT_FOUND, "Major does not exist terminating process......");
@@ -522,6 +536,7 @@ void switch_option(int option){
         }else{
             printMessage(INFO, "Enter student major: ");
             scanf("%s", major);
+            to_uppercase(major);
             loadFromFile(buffer_table, config.major_lookup_path);
             if(search(buffer_table, major) == NULL){
                 printMessage(NOT_FOUND, "Major does not exist terminating process.");
@@ -568,6 +583,7 @@ void switch_option(int option){
         }else{
             printMessage(INFO, "Enter student major: ");
             scanf("%s", major);
+            to_uppercase(major);
             loadFromFile(buffer_table, config.major_lookup_path);
             if(search(buffer_table, major) == NULL){
                 printMessage(NOT_FOUND, "Major does not exist terminating process.");
@@ -601,6 +617,7 @@ void switch_option(int option){
         }else{
             printMessage(INFO, "Enter student major: ");
             scanf("%s", major);
+            to_uppercase(major);
             loadFromFile(buffer_table, config.major_lookup_path);
             if(search(buffer_table, major) == NULL){
                 printMessage(NOT_FOUND, "Major does not exist terminating process.");

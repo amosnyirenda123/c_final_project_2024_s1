@@ -7,6 +7,7 @@
 #include "administration/majors/major.h"
 #include "administration/majors/module.h"
 #include "administration/maps/map.h"
+#include <ctype.h>
 
 #define PATH_LENGTH 100
 
@@ -41,6 +42,6 @@ FILE* open_file(const char* filename, const char* mode);
 void close_file(FILE* fptr);
 void initialize_paths(Config* config);
 void wait_press_enter();
-
+void to_uppercase(char *str);
 
 #endif

@@ -76,22 +76,35 @@ void print_student_semester_results(Student *student, int semester){
             int start_year = current_semester->academic_year.start_year;
             int end_year = current_semester->academic_year.end_year;
         int year_of_study = deduce_year_of_study(semester);
+
+        int student_rank_module, student_rank_semester;
+        const char* dir = "data";
+        char student_file_path[100];
+        FILE *sfp;
+        snprintf(student_file_path, sizeof(student_file_path), "%s/student.dat", dir);
+
         printf("\n");
         printf(YELLOW"\t\t\t\t\t  SEMESTER %d (%d/%d)\n"RESET, semester, start_year,end_year);
         printf(YELLOW"\t\tFULL NAME: %s %s   MAJOR: %s(%d)   STD CODE: %s\n"RESET, student->l_name, student->f_name, student->major.major_code,year_of_study, student->code);
         printf(BLUE"--------------------------------------------------------------------------------------------------------\n"RESET);
-        printf(BLUE"%-50s | %-10s | %-10s | %-18s\n"RESET, "MODULE", "CODE", "MARK", "STATUS");
+        printf(BLUE"%-50s | %-10s | %-10s | %-18s | %-8s\n"RESET, "MODULE", "CODE", "MARK", "STATUS", "RANK");
         printf(BLUE"--------------------------------------------------------------------------------------------------------\n"RESET);
        
+        sfp = fopen(student_file_path, "rb");
+        if(sfp == NULL){
+            student_rank_module = -1;
+        }
         
         for (int i = 0; i < current_semester->module_count; i++) {
-            printf("%-50s | %-10s | %-10.2f | %-18s\n", current_semester->modules[i].module_name, current_semester->modules[i].module_code, current_semester->modules[i].mark, current_semester->modules[i].pass_status);
+            student_rank_module = compute_student_rank_module(sfp, student, semester - 1, i);
+            printf("%-50s | %-10s | %-10.2f | %-18s | %-8d\n", current_semester->modules[i].module_name, current_semester->modules[i].module_code, current_semester->modules[i].mark, current_semester->modules[i].pass_status, student_rank_module);
         }
         current_semester->average_mark = sum_of_marks(current_semester->modules, current_semester->module_count) / current_semester->module_count;;
         char grade[10];
+        student_rank_semester = compute_student_rank(sfp, student, semester - 1);
         strcpy(grade, get_grade(current_semester->average_mark));
         printf(BLUE"--------------------------------------------------------------------------------------------------------\n"RESET);
-        printf("%-50s | %-10s | %.2f(%s)\n", "################################################", "AVERAGE", current_semester->average_mark,grade);
+        printf(YELLOW"%-50s | %-10s | %.2f(%s)  | RANK: %d\n", "################################################", "AVERAGE", current_semester->average_mark,grade, student_rank_semester);
         printf(BLUE"--------------------------------------------------------------------------------------------------------\n"RESET);
         }
 

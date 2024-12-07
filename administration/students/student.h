@@ -37,6 +37,8 @@ void display_students_by_major(FILE *student_file, const char major_code[MAJOR_C
 void display_all_students(FILE* student_file);
 void delete_student(FILE* student_file, const char student_code[STUDENT_CODE_LENGTH], const char major_code[MAJOR_CODE_LENGTH]);
 void print_student_summary(Student *student);
+int compute_student_rank(FILE *sfp, Student *current_student, int semester_index);
+int compute_student_rank_module(FILE *sfp, Student *current_student, int semester,int module_index);
 
 // Student studentList[MAX_STUDENTS];
 
