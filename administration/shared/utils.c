@@ -47,6 +47,7 @@ void safe_remove(const char* path) {
     int retries = 0;
     while (retries < MAX_RETRIES) {
         if (remove(path) == 0) {
+            printMessage(SUCCESS, "Delete Successful");
             return; // Success
         }
         retries++;
