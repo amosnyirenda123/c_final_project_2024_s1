@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <direct.h>
+#include "../../toast.h"
 
 int get_current_year() {
     time_t t = time(NULL);  
@@ -37,6 +38,24 @@ void string_to_uppercase(char *str) {
         str++; 
     }
 }
+
+void delay_operation(){
+    for(int i = 0; i < 20000; i++){
+    }
+}
+void safe_remove(const char* path) {
+    int retries = 0;
+    while (retries < MAX_RETRIES) {
+        if (remove(path) == 0) {
+            return; // Success
+        }
+        retries++;
+        printMessage(WARNING, "Retrying...\n");
+        delay_operation(); 
+    }
+    printMessage(ERROR, "Failed to remove file after multiple attempts.\n");
+}
+
 
 // char* create_directory(char name_dir[]){
 //    #ifdef _WIN32

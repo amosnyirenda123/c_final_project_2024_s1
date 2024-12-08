@@ -140,6 +140,7 @@ void delete_student(FILE* student_file, const char student_code[STUDENT_CODE_LEN
     if (found) {
         if (remove(students_path) != 0) {
             printMessage(ERROR, "Failed to remove original file.\n");
+            safe_remove(students_path);
         } else if (rename(tempfile_path, students_path) != 0) {
             printMessage(ERROR, "Failed to rename the temporary file.\n");
         } else {
