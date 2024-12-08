@@ -3,6 +3,7 @@
 #include "../maps/map.h"
 #include "../students/student.h"
 #include <ctype.h>
+#include "../shared/utils.h"
 
 
 const char* get_grade(float marks) {
@@ -156,6 +157,8 @@ void add_module(FILE* file) {
 
     printMessage(INFO, "Enter major code: ");
     scanf("%s", code);
+    string_to_uppercase(code);
+    
 
     loadFromFile(lookup_table_major, major_lookup_path);
     if (search(lookup_table_major, code) == NULL) {

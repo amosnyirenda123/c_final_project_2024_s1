@@ -184,7 +184,7 @@ StudentInfo* getStudentDetails(const char *student_lookup_path, const char *majo
         free(student);
         return NULL; 
     }
-
+  
     
     printf("\nEnter student major code: ");
     scanf("%9s", student->major); 
