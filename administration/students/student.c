@@ -9,6 +9,13 @@
 #include <time.h>
 #include <ctype.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#define sleep(x) Sleep(1000 * (x)) 
+#else
+#include <unistd.h>
+#endif
+
 
 static void generate_student_email(char *email, const char f_name[MAX_LENGTH], const char l_name[MAX_LENGTH])
 {
@@ -25,6 +32,7 @@ void add_student(FILE *student_file)
     Node* student_lookup_table[TABLE_SIZE] = {0};
     char student_lookup_path[100], student_full_name[100];
     char message[MAX_WORD_LENGTH];
+    char student_major_code[CODE_LENGTH];
     const char* dir = "data";
 
     snprintf(student_lookup_path, sizeof(student_lookup_path), "%s/student_lookup.dat", dir);
@@ -38,8 +46,9 @@ void add_student(FILE *student_file)
     printMessage(INFO, "Enter Student Date of Birth (YYYY MM DD): ");
     scanf("%d %d %d", &s_details.s_date_of_birth.year, &s_details.s_date_of_birth.month, &s_details.s_date_of_birth.day);
     printMessage(INFO, "Enter the code of the major (CS/CE/ME/EE): ");
-    scanf("%s", s_details.major.major_code);
-
+    scanf("%s", student_major_code);
+    string_to_uppercase(student_major_code);
+    strncpy(s_details.major.major_code, student_major_code, CODE_LENGTH);
     // setting module count to zero
     for(int i = 0; i < MAX_SEMESTERS + 1; i++){
         s_details.major.semester[i].module_count = 0;
@@ -136,7 +145,8 @@ void delete_student(FILE* student_file, const char student_code[STUDENT_CODE_LEN
 
     fclose(student_file);
     fclose(temp_file);
-
+    sleep(5);
+    
     if (found) {
         if (remove(students_path) != 0) {
             printMessage(ERROR, "Failed to remove original file.\n");

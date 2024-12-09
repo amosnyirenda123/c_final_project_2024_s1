@@ -217,6 +217,7 @@ void allocate_marks_to_student(FILE *student_file, const char student_code[STUDE
     Student *student;
     student = find_student(student_file, student_code, major_code);
     char message[MESSAGE_LENGTH];
+    char message2[MESSAGE_LENGTH];
     if (student != NULL) {
         if (semester < 1 || semester > 6) {  
             printMessage(ERROR, "Invalid semester number. Please enter a value between 1 and 6.\n");
@@ -228,8 +229,24 @@ void allocate_marks_to_student(FILE *student_file, const char student_code[STUDE
         Semester *current_semester = &student->major.semester[semester - 1];  
         for (int i = 0; i < current_semester->module_count; i++) {
             snprintf(message, MESSAGE_LENGTH, "Enter Mark for %s (%s): ", current_semester->modules[i].module_name, current_semester->modules[i].module_code);
+            float mark;
             printMessage(INFO, message);
-            scanf("%f", &current_semester->modules[i].mark);
+            scanf("%f", &mark);
+            if(mark > MAX_MODULE_MARK){
+                snprintf(message2, MESSAGE_LENGTH, "Mark cannot be greater than %d", MAX_MODULE_MARK);
+                printMessage(WARNING, message2);
+                snprintf(message, MESSAGE_LENGTH, "Enter Mark for %s (%s): ", current_semester->modules[i].module_name, current_semester->modules[i].module_code);
+                printMessage(INFO, message);
+                scanf("%f", &mark);
+                if(mark > MAX_MODULE_MARK){
+                    return;
+                }else{
+                    current_semester->modules[i].mark = mark;
+                }
+
+            }else{
+                current_semester->modules[i].mark = mark;
+            }
             if(current_semester->modules[i].mark >= current_semester->modules[i].pass_mark){
                 strcpy(current_semester->modules[i].pass_status, "VALIDATED");
             }else{

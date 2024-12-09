@@ -6,6 +6,13 @@
 #include <direct.h>
 #include "../../toast.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#define sleep(x) Sleep(1000 * (x)) 
+#else
+#include <unistd.h>
+#endif
+
 int get_current_year() {
     time_t t = time(NULL);  
     struct tm *tm_info = localtime(&t);  
@@ -51,23 +58,12 @@ void safe_remove(const char* path) {
             return; // Success
         }
         retries++;
-        printMessage(WARNING, "Retrying...\n");
-        delay_operation(); 
+        printMessage(RES, "Retrying with safe delete...\n");
+        sleep(5);
     }
     printMessage(ERROR, "Failed to remove file after multiple attempts.\n");
 }
 
 
-// char* create_directory(char name_dir[]){
-//    #ifdef _WIN32
-//         if (_mkdir(name_dir) != 0) {
-//             printf("Failed to create directory: %s\n", name_dir);
-//         }
-//     #else
-        
-//         if (mkdir(dir, 0777) != 0) { 
-//             printf("Failed to create directory: %s\n", dir);
-//         }
-//     #endif 
-// }
+
 

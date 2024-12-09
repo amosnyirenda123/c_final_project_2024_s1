@@ -53,10 +53,10 @@ void about_app() {
     printf("   2. \033[1;35mOUEDRAOGO WENDINKONTE LUTHER ARTHUR\033[0m\n");
     printf("   3. \033[1;35mNYIRENDA AMOS\033[0m\n");
 
-    // Adding open-source information
+    
     printf("\n\033[1;32mThis project is open source!\033[0m\n");
     printf("You can find the source code and contribute to the project at:\n");
-    printf("\033[1;36mhttps://github.com/YourUsername/StudentManagementSystem\033[0m\n");
+    printf("\033[1;36mhttps://github.com/amosnyirenda123/c_final_project_2024_s1\033[0m\n");
     
     printf("\n\033[1;32mPress Enter to return to the menu...\033[0m\n");
     getchar(); 
@@ -488,7 +488,8 @@ void switch_option(int option){
 
         char warning_input;
 
-        printMessage(WARNING, "Deleting will permanently erase all related information. This action cannot be undone. Are you sure you want to proceed? (y/n): ");
+        printMessage(WARNING, "Deleting will permanently erase all related information.\n");
+        printMessage(WARNING, "This action cannot be undone. Are you sure you want to proceed? (y/n): ");
         scanf(" %c", &warning_input);
 
         if(warning_input == 'n'){

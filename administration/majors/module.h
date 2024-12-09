@@ -13,6 +13,7 @@
 #define MAX_MODULE_NAME_LENGTH 50
 #define MAX_LENGTH 50
 #define MODULE_PASS_MARK 12
+#define MAX_MODULE_MARK 20
 
 
 
